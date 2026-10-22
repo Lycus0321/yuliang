@@ -1,0 +1,580 @@
+import {
+  AlertTriangle,
+  Layers3,
+  RefreshCw,
+  Search,
+  SlidersHorizontal,
+} from 'lucide-react-native';
+import { useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { SpoolCard } from '../components/SpoolCard';
+import { colors, radii, type } from '../theme';
+import type { Spool } from '../types';
+
+type Filter = 'all' | 'loaded' | 'low' | 'depleted';
+
+const materialOrder = ['PLA', 'PETG', 'ABS', 'ASA', 'TPU', 'PC', 'PA', '其他'];
+
+function materialGroup(spool: Spool) {
+  const value = `${spool.filamentType || ''} ${spool.filamentName || ''}`.toUpperCase();
+  if (value.includes('PLA')) return 'PLA';
+  if (value.includes('PETG')) return 'PETG';
+  if (value.includes('ABS')) return 'ABS';
+  if (value.includes('ASA')) return 'ASA';
+  if (value.includes('TPU')) return 'TPU';
+  if (value.includes('PC')) return 'PC';
+  if (value.includes('PA')) return 'PA';
+  return '其他';
+}
+
+type Props = {
+  spools: Spool[];
+  loading: boolean;
+  refreshing: boolean;
+  error: string;
+  onRefresh: () => void;
+  onOpenSpool: (spool: Spool) => void;
+};
+
+export function LibraryView({
+  spools,
+  loading,
+  refreshing,
+  error,
+  onRefresh,
+  onOpenSpool,
+}: Props) {
+  const { width } = useWindowDimensions();
+  const contentWidth = Math.min(width - 48, 1200);
+  const columns = contentWidth >= 1000 ? 3 : contentWidth >= 680 ? 2 : 1;
+  const compact = contentWidth < 680;
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
+
+  const filtered = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return spools.filter((spool) => {
+      const depleted = (spool.netWeight || 0) <= 0;
+      if (filter === 'depleted' && !depleted) return false;
+      if (filter !== 'depleted' && depleted) return false;
+      if (filter === 'loaded' && !spool.inPrinter) return false;
+      if (filter === 'low' && (spool.netWeight || 0) > 250) return false;
+      if (!normalized) return true;
+      return [
+        spool.displayName,
+        spool.filamentName,
+        spool.filamentVendor,
+        spool.filamentType,
+        spool.note,
+        spool.deviceName,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalized));
+    });
+  }, [filter, query, spools]);
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, Spool[]>();
+    for (const spool of filtered) {
+      const group = materialGroup(spool);
+      map.set(group, [...(map.get(group) || []), spool]);
+    }
+    return [...map.entries()].sort(([left], [right]) => {
+      const leftIndex = materialOrder.indexOf(left);
+      const rightIndex = materialOrder.indexOf(right);
+      if (leftIndex >= 0 || rightIndex >= 0) {
+        return (leftIndex < 0 ? 999 : leftIndex) - (rightIndex < 0 ? 999 : rightIndex);
+      }
+      return left.localeCompare(right);
+    });
+  }, [filtered]);
+
+  const activeSpools = spools.filter((spool) => (spool.netWeight || 0) > 0);
+  const depletedCount = spools.length - activeSpools.length;
+  const total = activeSpools.reduce((sum, spool) => sum + (spool.netWeight || 0), 0);
+  const loadedCount = activeSpools.filter((spool) => spool.inPrinter).length;
+  const lowCount = activeSpools.filter((spool) => (spool.netWeight || 0) <= 250).length;
+  const materials = new Set(activeSpools.map(materialGroup)).size;
+
+  return (
+    <ScrollView
+      contentContainerStyle={styles.scroll}
+      refreshControl={
+        <RefreshControl
+          colors={[colors.primary]}
+          onRefresh={onRefresh}
+          refreshing={refreshing}
+          tintColor={colors.primary}
+        />
+      }
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.content}>
+        <View style={styles.headingRow}>
+          <View>
+            <Text style={styles.breadcrumb}>耗材管理</Text>
+            <Text style={styles.title}>耗材库</Text>
+          </View>
+          <View style={styles.headingActions}>
+            {!compact ? (
+              <View style={styles.search}>
+                <Search color={colors.muted} size={17} strokeWidth={1.7} />
+                <TextInput
+                  onChangeText={setQuery}
+                  placeholder="搜索品牌、类型或颜色"
+                  placeholderTextColor={colors.muted}
+                  style={styles.searchInput}
+                  value={query}
+                />
+              </View>
+            ) : null}
+            <Pressable
+              accessibilityLabel="刷新耗材库"
+              onPress={onRefresh}
+              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+            >
+              <RefreshCw color={colors.ink} size={18} strokeWidth={1.7} />
+            </Pressable>
+            <Pressable
+              disabled={loading}
+              onPress={onRefresh}
+              style={({ pressed }) => [
+                styles.syncButton,
+                pressed && styles.syncButtonPressed,
+                loading && styles.disabled,
+              ]}
+            >
+              <RefreshCw color={colors.white} size={18} strokeWidth={1.8} />
+              <Text style={styles.syncText}>同步云端</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {error ? (
+          <View style={styles.errorBanner}>
+            <AlertTriangle color={colors.danger} size={17} />
+            <Text style={styles.errorText}>{error}</Text>
+            <Pressable onPress={onRefresh}>
+              <Text style={styles.retry}>重试</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        <View style={[styles.overview, compact && styles.overviewCompact]}>
+          <View style={styles.overviewMain}>
+            <Text style={styles.overviewLabel}>当前剩余总量</Text>
+            <View style={styles.overviewValueRow}>
+              <Text style={styles.overviewValue}>{(total / 1000).toFixed(2)}</Text>
+              <Text style={styles.overviewUnit}>kg</Text>
+            </View>
+            <Text style={styles.overviewMeta}>
+              {activeSpools.length} 盘可用，{lowCount} 盘低于 250 g
+              {depletedCount ? `，${depletedCount} 盘已用尽` : ''}
+            </Text>
+          </View>
+          <View style={[styles.overviewStats, compact && styles.overviewStatsCompact]}>
+            <Stat value={loadedCount} label="已装入 AMS" />
+            <Stat value={lowCount} label="低余量" />
+            <Stat value={materials} label="材料类型" />
+          </View>
+        </View>
+
+        <View style={styles.toolbar}>
+          <View style={styles.filters}>
+            <FilterChip label="全部" active={filter === 'all'} onPress={() => setFilter('all')} />
+            <FilterChip
+              label="已装入"
+              active={filter === 'loaded'}
+              onPress={() => setFilter('loaded')}
+            />
+            <FilterChip
+              label="低余量"
+              active={filter === 'low'}
+              onPress={() => setFilter('low')}
+            />
+            <FilterChip
+              label="已用尽"
+              active={filter === 'depleted'}
+              onPress={() => setFilter('depleted')}
+            />
+          </View>
+        </View>
+
+        {loading && !spools.length ? (
+          <View style={styles.loading}>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={styles.loadingText}>正在读取云端耗材库</Text>
+          </View>
+        ) : (
+          <View style={styles.groups}>
+            {grouped.map(([group, items]) => {
+              const remaining = items.reduce(
+                (sum, item) => sum + Math.max(0, item.netWeight || 0),
+                0,
+              );
+              return (
+                <View key={group} style={styles.group}>
+                  <View style={styles.groupHeader}>
+                    <View style={styles.groupTitleRow}>
+                      <Layers3 color={colors.muted} size={17} strokeWidth={1.7} />
+                      <Text style={styles.groupTitle}>{group}</Text>
+                      <Text style={styles.groupCount}>{items.length} 盘</Text>
+                    </View>
+                    <Text style={styles.groupMeta}>剩余 {(remaining / 1000).toFixed(2)} kg</Text>
+                  </View>
+                  <View style={styles.grid}>
+                    {items.map((spool) => (
+                      <SpoolCard
+                        key={spool.id}
+                        onPress={() => onOpenSpool(spool)}
+                        spool={spool}
+                        style={{ width: `${100 / columns - 1.2}%` }}
+                      />
+                    ))}
+                  </View>
+                </View>
+              );
+            })}
+            {!filtered.length ? (
+              <View style={styles.empty}>
+                <SlidersHorizontal color={colors.muted} size={28} strokeWidth={1.5} />
+                <Text style={styles.emptyTitle}>没有匹配的耗材</Text>
+                <Text style={styles.emptyText}>
+                  {filter === 'all' && depletedCount
+                    ? '已用尽耗材默认隐藏，请切换到“已用尽”查看'
+                    : '调整搜索或筛选条件'}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        )}
+      </View>
+    </ScrollView>
+  );
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <View style={styles.stat}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function FilterChip({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.chip,
+        active && styles.chipActive,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  scroll: {
+    paddingBottom: 40,
+  },
+  content: {
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    width: '100%',
+    maxWidth: 1200,
+  },
+  headingRow: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    gap: 20,
+    justifyContent: 'space-between',
+    minHeight: 76,
+  },
+  breadcrumb: {
+    color: colors.muted,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+  },
+  title: {
+    ...type.display,
+    color: colors.ink,
+    fontFamily: 'Inter_700Bold',
+  },
+  headingActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    paddingBottom: 3,
+  },
+  search: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.72)',
+    borderColor: colors.line,
+    borderRadius: radii.input,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    height: 40,
+    paddingHorizontal: 12,
+    width: 264,
+  },
+  searchInput: {
+    color: colors.ink,
+    flex: 1,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    outlineWidth: 0,
+    padding: 0,
+  },
+  iconButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.72)',
+    borderColor: colors.line,
+    borderRadius: radii.control,
+    borderWidth: 1,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  syncButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: radii.control,
+    flexDirection: 'row',
+    gap: 7,
+    height: 40,
+    paddingHorizontal: 15,
+  },
+  syncButtonPressed: {
+    backgroundColor: colors.primaryPressed,
+  },
+  syncText: {
+    color: colors.white,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+  },
+  disabled: {
+    opacity: 0.55,
+  },
+  pressed: {
+    opacity: 0.65,
+  },
+  errorBanner: {
+    alignItems: 'center',
+    backgroundColor: colors.dangerSoft,
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: 9,
+    marginTop: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+  },
+  errorText: {
+    color: colors.danger,
+    flex: 1,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+  },
+  retry: {
+    color: colors.danger,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+  },
+  overview: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderColor: colors.line,
+    borderRadius: radii.medium,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 28,
+    marginTop: 18,
+    padding: 22,
+  },
+  overviewMain: {
+    flex: 1,
+  },
+  overviewCompact: {
+    flexDirection: 'column',
+    gap: 16,
+    padding: 18,
+  },
+  overviewLabel: {
+    color: colors.muted,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+  },
+  overviewValueRow: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    marginTop: 2,
+  },
+  overviewValue: {
+    color: colors.ink,
+    fontFamily: 'Inter_700Bold',
+    fontSize: 42,
+    letterSpacing: -0.03,
+    lineHeight: 46,
+  },
+  overviewUnit: {
+    color: colors.muted,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  overviewMeta: {
+    color: colors.muted,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    marginTop: 3,
+  },
+  overviewStats: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  overviewStatsCompact: {
+    width: '100%',
+  },
+  stat: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    justifyContent: 'center',
+    minWidth: 92,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+  },
+  statValue: {
+    color: colors.ink,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 22,
+    lineHeight: 27,
+  },
+  statLabel: {
+    color: colors.muted,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  toolbar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: 7,
+  },
+  chip: {
+    backgroundColor: 'rgba(29,29,31,0.055)',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  chipActive: {
+    backgroundColor: colors.primary,
+  },
+  chipText: {
+    color: colors.muted,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+  },
+  chipTextActive: {
+    color: colors.white,
+  },
+  grid: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 14,
+  },
+  groups: {
+    gap: 24,
+    marginTop: 18,
+  },
+  group: {
+    gap: 2,
+  },
+  groupHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  groupTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 7,
+  },
+  groupTitle: {
+    color: colors.ink,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+  },
+  groupCount: {
+    color: colors.muted,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+  },
+  groupMeta: {
+    color: colors.muted,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+  },
+  loading: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 280,
+  },
+  loadingText: {
+    color: colors.muted,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    marginTop: 12,
+  },
+  empty: {
+    alignItems: 'center',
+    borderColor: colors.line,
+    borderRadius: radii.medium,
+    borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 220,
+    width: '100%',
+  },
+  emptyTitle: {
+    color: colors.ink,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 16,
+    marginTop: 10,
+  },
+  emptyText: {
+    color: colors.muted,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    marginTop: 3,
+  },
+});

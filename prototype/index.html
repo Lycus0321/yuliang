@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#F5F5F7" />
+    <title>余量 - 耗材管理原型</title>
+    <link rel="stylesheet" href="./assets/phosphor.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="ambient-light" aria-hidden="true"></div>
+
+    <div class="app-shell">
+      <aside class="sidebar glass-panel">
+        <a class="brand" href="#" aria-label="余量首页">
+          <span class="brand-mark"><i class="ph ph-cube"></i></span>
+          <span>余量</span>
+        </a>
+
+        <nav class="primary-nav" aria-label="主导航">
+          <button class="nav-item is-active" data-view="library">
+            <i class="ph ph-grid-four"></i>
+            <span>耗材库</span>
+          </button>
+          <button class="nav-item" data-view="settings">
+            <i class="ph ph-sliders-horizontal"></i>
+            <span>偏好设置</span>
+          </button>
+        </nav>
+
+        <button class="account-card" data-view="login">
+          <span class="account-icon"><i class="ph ph-user-circle"></i></span>
+          <span class="account-copy">
+            <strong>Bambu 账号</strong>
+            <span>云端已连接</span>
+          </span>
+          <i class="ph ph-cloud-check"></i>
+        </button>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div class="page-heading">
+            <p class="breadcrumb">耗材管理</p>
+            <h1 id="page-title">耗材库</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="search-box">
+              <i class="ph ph-magnifying-glass"></i>
+              <input id="global-search" type="search" placeholder="搜索品牌、类型或颜色" />
+              <span>/</span>
+            </label>
+            <button class="icon-button" data-action="refresh" aria-label="刷新耗材库">
+              <i class="ph ph-arrow-clockwise"></i>
+            </button>
+            <button class="primary-button" id="header-primary" data-action="refresh">
+              <i class="ph ph-arrow-clockwise"></i>
+              同步云端
+            </button>
+          </div>
+        </header>
+
+        <div id="view-root" class="view-root"></div>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="modal-backdrop"></div>
+    <section
+      class="spool-modal glass-panel"
+      id="spool-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+    >
+      <div id="modal-content"></div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <i class="ph ph-check"></i>
+      <span>设置已保存</span>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

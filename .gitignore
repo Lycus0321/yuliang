@@ -6,8 +6,11 @@ node_modules/
 # Expo
 .expo/
 dist/
+dist-web/
+dist-android/
 web-build/
 expo-env.d.ts
+artifacts-*.png
 
 # Native
 .kotlin/
@@ -25,6 +28,7 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+worker-dev.*.log
 
 # macOS
 .DS_Store
@@ -32,6 +36,8 @@ yarn-error.*
 
 # local env files
 .env*.local
+.dev.vars
+.wrangler/
 
 # typescript
 *.tsbuildinfo

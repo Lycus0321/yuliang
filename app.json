@@ -1,25 +1,49 @@
 {
   "expo": {
-    "name": "filament-app",
-    "slug": "filament-app",
+    "name": "余量",
+    "slug": "filament-scale",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "backgroundColor": "#F3F4EF",
+    "splash": {
+      "backgroundColor": "#F3F4EF",
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yuliang.filament"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#F3F4EF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "package": "com.yuliang.filament",
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "余量",
+      "shortName": "余量",
+      "lang": "zh-CN",
+      "scope": "/",
+      "startUrl": "/",
+      "display": "standalone",
+      "orientation": "any",
+      "themeColor": "#236B55",
+      "backgroundColor": "#F3F4EF",
+      "description": "拓竹云端耗材称重与库存管理"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      "expo-sharing"
+    ]
   }
 }
