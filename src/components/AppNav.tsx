@@ -105,7 +105,7 @@ export function AppNav({ view, desktop, session, onChangeView, onLogout }: Props
 const styles = StyleSheet.create({
   desktopShell: {
     alignSelf: 'center',
-    maxWidth: 1408,
+    maxWidth: 1200,
     width: '100%',
   },
   mobileShell: {
