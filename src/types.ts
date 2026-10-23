@@ -32,7 +32,7 @@ export type Session = {
 };
 
 export type LoginResult =
-  | { kind: 'success' }
+  | { kind: 'success'; session: Session }
   | { kind: 'code-required'; message: string }
   | { kind: 'tfa-required'; message: string; tfaKey?: string };
 

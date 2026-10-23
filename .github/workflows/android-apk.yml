@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: "1"
-      EXPO_PUBLIC_API_BASE: ${{ vars.EXPO_PUBLIC_API_BASE }}
 
     steps:
       - name: Checkout
@@ -66,7 +65,7 @@ jobs:
           body: |
             由 GitHub Actions 自动构建的 Android 测试 APK。
 
-            如果未配置 EXPO_PUBLIC_API_BASE，APK 只能使用演示模式或 PWA 同源接口。
+            Android 端直接连接拓竹 API，不依赖 Cloudflare Worker。
           prerelease: true
           make_latest: false
           overwrite_files: true

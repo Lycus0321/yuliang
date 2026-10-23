@@ -33,10 +33,6 @@ export function LoginScreen({ onAuthenticated }: Props) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const completeLogin = async () => {
-    await onAuthenticated({ region, email, demo: false });
-  };
-
   const handleLogin = async () => {
     if (busy) return;
     if (!email.trim()) {
@@ -57,17 +53,18 @@ export function LoginScreen({ onAuthenticated }: Props) {
     try {
       if (stage !== 'credentials') {
         if (stage === 'tfa') {
-          await loginWithTfa(region, email.trim(), tfaKey, code.trim());
+          const session = await loginWithTfa(region, email.trim(), tfaKey, code.trim());
+          await onAuthenticated(session);
         } else {
-          await loginWithCode(region, email.trim(), code.trim());
+          const session = await loginWithCode(region, email.trim(), code.trim());
+          await onAuthenticated(session);
         }
-        await completeLogin();
         return;
       }
 
       const result = await login(region, email.trim(), password);
       if (result.kind === 'success') {
-        await completeLogin();
+        await onAuthenticated(result.session);
       } else if (result.kind === 'code-required') {
         setStage('code');
         setMessage(result.message);
@@ -259,7 +256,9 @@ export function LoginScreen({ onAuthenticated }: Props) {
           <View style={styles.securityNote}>
             <Lock color={colors.muted} size={14} />
             <Text style={styles.securityText}>
-            登录会话由云端通过 HttpOnly Cookie 保存，Bambu Token 不会暴露给前端。
+              {Platform.OS === 'web'
+                ? '登录会话由 Worker 通过 HttpOnly Cookie 保存，Bambu Token 不会暴露给浏览器 JavaScript。'
+                : 'Bambu Token 保存在系统安全存储中，仅用于从本机直接连接拓竹服务。'}
             </Text>
           </View>
 

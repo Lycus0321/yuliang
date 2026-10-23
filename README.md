@@ -17,7 +17,7 @@ npm run web
 
 浏览器访问 `http://localhost:8081`。Worker 本地运行在 `http://localhost:8787`，负责 Bambu 登录、HttpOnly 会话和耗材 API 转发。
 
-手机或 PWA 部署时通过 `EXPO_PUBLIC_API_BASE` 指向 Worker。生产环境由 Worker 同源托管 PWA，因此不需要配置跨域地址。
+Web 与 PWA 由 Worker 同源托管。Android 和 iOS 原生端直接连接拓竹 API，不经过 Worker，也不需要配置 `EXPO_PUBLIC_API_BASE`。
 
 ## 构建与部署
 
@@ -62,20 +62,20 @@ npx serve prototype -l 4173
 预设管理支持新增、编辑、删除、隐藏和设置默认项。内置预设的名称与克重修改只保存在本机，不会改动 Bambu Studio；删除默认预设后会自动回退到内置默认值。
 自定义选项删除前需要二次确认，颜色列表显示实际色样；云端目录可用时，品牌与型号选项优先使用云端结果，内置目录仅作为请求失败时的回退。
 
-正式应用会通过 Worker 的 `/api/catalog` 同步 Bambu 官方耗材目录和用户切片预设，并在目录不可用时回退到内置预设。每个料盘的皮重和其他重量选择会保存在本机。
+Web 端会通过 Worker 的 `/api/catalog` 同步 Bambu 官方耗材目录和用户切片预设，原生端使用相同的直连逻辑获取目录。目录不可用时回退到内置预设。每个料盘的皮重和其他重量选择会保存在本机。
 
 本地偏好使用 AsyncStorage 持久化，JSON 导出会生成 `yuliang-preferences-YYYY-MM-DD.json`。导入支持合并和完整替换两种模式，覆盖 RFID 开关、默认皮重、自定义选项、隐藏项和每盘重量记忆。
 
 ## 移动端构建
 
-Android 内测 APK 和 iOS TestFlight 构建使用：
+Android 内测 APK 由 GitHub Actions 自动构建并发布到 `android-latest` Release。手动构建命令为：
 
 ```powershell
 npm run build:android:preview
 npm run build:ios:preview
 ```
 
-首次构建需要登录 Expo 账号并完成 Android 或 Apple 签名配置。
+首次通过 EAS 构建时需要登录 Expo 账号并完成 Android 或 Apple 签名配置。
 
 ## 数据接口
 
@@ -90,8 +90,8 @@ npm run build:ios:preview
 
 - 接口为社区逆向的非公开接口，拓竹调整接口后需要适配。
 - 当前版本支持密码登录和邮箱/短信验证码登录，暂不支持 TOTP 双重验证。
-- 浏览器、PWA 和原生 App 均通过 Cloudflare Worker 访问拓竹云，Bambu Token 不进入客户端。
-- 手机原生直连仍可能受到 Cloudflare 策略影响，出现拦截时需要在自有后端增加转发。
+- 浏览器和 PWA 通过 Cloudflare Worker 访问拓竹云，Bambu Token 由 HttpOnly Cookie 保存。
+- Android 和 iOS 原生端直接访问拓竹 API，Bambu Token 使用系统安全存储保存。
 
 ## RFID 料盘编辑
 

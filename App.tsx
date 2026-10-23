@@ -110,11 +110,11 @@ function AppContent() {
       else setLoading(true);
       setError('');
       try {
-        const next = activeSession.demo ? demoSpools : await getSpools();
+        const next = activeSession.demo ? demoSpools : await getSpools(activeSession);
         setSpools(next);
         if (!activeSession.demo) {
           try {
-            const options = await getCatalog();
+            const options = await getCatalog(activeSession);
             setCatalog(options.catalog);
             setPresets(options.presets);
           } catch {
@@ -174,9 +174,9 @@ function AppContent() {
   const handleLogout = async () => {
     if (session && !session.demo) {
       try {
-        await logoutSession();
+        await logoutSession(session);
       } catch {
-        // The local session is cleared even if the Worker is unreachable.
+        // The local session is cleared even if the remote service is unreachable.
       }
     }
     await clearSession();
@@ -250,7 +250,7 @@ function AppContent() {
       return;
     }
 
-    const updated = await updateSpool(spool, { netWeight: remaining });
+    const updated = await updateSpool(session, spool, { netWeight: remaining });
     setSpools((current) =>
       current.map((item) =>
         item.id === spool.id ? { ...item, ...updated, netWeight: remaining } : item,
@@ -264,7 +264,7 @@ function AppContent() {
 
   const handleDeleteSpool = async (spool: Spool) => {
     if (!session) throw new Error('登录状态已失效。');
-    if (!session.demo) await deleteSpool(spool.id);
+    if (!session.demo) await deleteSpool(session, spool.id);
     setSpools((current) => current.filter((item) => item.id !== spool.id));
   };
 
@@ -277,8 +277,8 @@ function AppContent() {
       return;
     }
 
-    await updateSpool(spool, update);
-    const refreshed = await getSpools();
+    await updateSpool(session, spool, update);
+    const refreshed = await getSpools(session);
     const fresh = refreshed.find((item) => item.id === spool.id);
     if (!fresh) throw new Error('修改后未能从云端重新读取该料盘。');
 

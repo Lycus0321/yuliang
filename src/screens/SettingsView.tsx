@@ -15,6 +15,7 @@ import {
 } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -289,7 +290,9 @@ export function SettingsView({
                       <View>
                         <Text style={styles.settingTitle}>会话恢复</Text>
                         <Text style={styles.settingMeta}>
-                          登录态由 Cloudflare Worker 管理，令牌不会进入浏览器 JavaScript。
+                          {Platform.OS === 'web'
+                            ? '登录态由 Cloudflare Worker 管理，令牌不会进入浏览器 JavaScript。'
+                            : '登录令牌保存在系统安全存储中，并直接用于连接拓竹服务。'}
                         </Text>
                       </View>
                     }
