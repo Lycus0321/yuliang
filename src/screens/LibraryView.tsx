@@ -9,7 +9,7 @@ import {
   Search,
   SlidersHorizontal,
 } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -98,6 +98,16 @@ export function LibraryView({
   const updateState = (patch: Partial<LibraryViewState>) => {
     onStateChange({ ...state, ...patch });
   };
+  const availableMaterials = useMemo(
+    () => materialOrder.filter((item) => spools.some((spool) => materialGroup(spool) === item)),
+    [spools],
+  );
+
+  useEffect(() => {
+    if (material !== 'all' && !availableMaterials.includes(material)) {
+      onStateChange({ ...state, material: 'all' });
+    }
+  }, [availableMaterials, material, onStateChange, state]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -324,12 +334,8 @@ export function LibraryView({
           </View>
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.materialChips}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        >
-          {['all', ...materialOrder].map((item) => (
+        <View style={styles.materialChips}>
+          {['all', ...availableMaterials].map((item) => (
             <FilterChip
               key={item}
               label={item === 'all' ? '全部材料' : item}
@@ -338,7 +344,7 @@ export function LibraryView({
               subtle
             />
           ))}
-        </ScrollView>
+        </View>
 
         {loading && !spools.length ? (
           <View style={styles.loading}>
@@ -782,6 +788,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.mint,
   },
   materialChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 7,
     paddingTop: 10,
   },
