@@ -260,35 +260,7 @@ export function SpoolCard({
                 {spool.filamentName || spool.filamentType || '未知材质'}
               </Text>
             </View>
-            {!locationLabel ? (
-              <>
-                {remaining === 0 ? (
-                  <View style={[styles.mode, styles.modeEmpty]}>
-                    <Text style={[styles.modeText, styles.modeTextEmpty]}>
-                      已用尽
-                    </Text>
-                  </View>
-                ) : null}
-                <View style={[styles.mode, rfid && styles.modeRfid]}>
-                  {rfid ? (
-                    <Nfc color={colors.primary} size={14} strokeWidth={1.7} />
-                  ) : (
-                    <Pencil color={colors.muted} size={13} strokeWidth={1.7} />
-                  )}
-                  <Text style={[styles.modeText, rfid && styles.modeTextRfid]}>
-                    {rfid ? 'RFID' : '手动'}
-                  </Text>
-                </View>
-              </>
-            ) : null}
-          </View>
-
-          {locationLabel ? (
-            <View style={styles.meta}>
-              <View style={styles.locationBadge}>
-                <CloudCheck color={colors.primary} size={13} strokeWidth={1.8} />
-                <Text style={styles.locationText}>{locationLabel}</Text>
-              </View>
+            <View style={styles.headerBadges}>
               {remaining === 0 ? (
                 <View style={[styles.mode, styles.modeEmpty]}>
                   <Text style={[styles.modeText, styles.modeTextEmpty]}>
@@ -305,6 +277,15 @@ export function SpoolCard({
                 <Text style={[styles.modeText, rfid && styles.modeTextRfid]}>
                   {rfid ? 'RFID' : '手动'}
                 </Text>
+              </View>
+            </View>
+          </View>
+
+          {locationLabel ? (
+            <View style={styles.meta}>
+              <View style={styles.locationBadge}>
+                <CloudCheck color={colors.primary} size={13} strokeWidth={1.8} />
+                <Text style={styles.locationText}>{locationLabel}</Text>
               </View>
             </View>
           ) : null}
@@ -456,7 +437,7 @@ const styles = StyleSheet.create({
     gap: 2,
     position: 'absolute',
     right: 13,
-    top: 13,
+    top: 15,
     zIndex: 2,
   },
   quickButton: {
@@ -476,6 +457,12 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 6,
     marginTop: 8,
+  },
+  headerBadges: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+    marginLeft: 'auto',
   },
   locationBadge: {
     alignItems: 'center',
