@@ -69,7 +69,7 @@ Web 端会通过 Worker 的 `/api/catalog` 同步 Bambu 官方耗材目录和用
 
 ## 移动端构建
 
-Android 内测 APK 由 GitHub Actions 自动构建并发布到 `android-latest` Release。手动构建命令为：
+Android 内测 APK 由 GitHub Actions 手动触发构建并发布到 `android-latest` Release，不再跟随每次推送自动构建。手动构建命令为：
 
 ```powershell
 npm run build:android:preview
