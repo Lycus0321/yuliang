@@ -154,10 +154,37 @@ export function SpoolCard({
                   {spool.filamentVendor || '未知品牌'} ·{' '}
                   {spool.filamentName || spool.filamentType || '未知材质'}
                 </Text>
-                {compactList && locationLabel ? (
-                  <Text numberOfLines={1} style={styles.listLocation}>
-                    {locationLabel}
-                  </Text>
+                {compactList ? (
+                  <View style={styles.listCompactMeta}>
+                    {locationLabel ? (
+                      <Text numberOfLines={1} style={styles.listLocation}>
+                        {locationLabel}
+                      </Text>
+                    ) : null}
+                    {remaining === 0 ? (
+                      <Text style={styles.listCompactEmpty}>已用尽</Text>
+                    ) : null}
+                    <View
+                      style={[
+                        styles.listCompactMode,
+                        rfid && styles.listCompactModeRfid,
+                      ]}
+                    >
+                      {rfid ? (
+                        <Nfc color={colors.primary} size={11} strokeWidth={1.7} />
+                      ) : (
+                        <Pencil color={colors.muted} size={10} strokeWidth={1.7} />
+                      )}
+                      <Text
+                        style={[
+                          styles.listCompactModeText,
+                          rfid && styles.listCompactModeTextRfid,
+                        ]}
+                      >
+                        {rfid ? 'RFID' : '手动'}
+                      </Text>
+                    </View>
+                  </View>
                 ) : null}
               </View>
             </View>
@@ -375,8 +402,39 @@ const styles = StyleSheet.create({
   listLocation: {
     color: colors.muted,
     fontFamily: 'Inter_500Medium',
-    fontSize: 13,
+    fontSize: 11,
+  },
+  listCompactMeta: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
     marginTop: 2,
+  },
+  listCompactEmpty: {
+    color: colors.danger,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 11,
+  },
+  listCompactMode: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(29,29,31,0.055)',
+    borderRadius: 999,
+    flexDirection: 'row',
+    gap: 3,
+    minHeight: 18,
+    paddingHorizontal: 5,
+  },
+  listCompactModeRfid: {
+    backgroundColor: colors.mint,
+  },
+  listCompactModeText: {
+    color: colors.muted,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 11,
+  },
+  listCompactModeTextRfid: {
+    color: colors.primary,
   },
   listMetric: {
     width: 150,

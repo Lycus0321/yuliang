@@ -2,19 +2,14 @@
   "expo": {
     "name": "余量",
     "slug": "filament-scale",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F3F4EF",
-    "splash": {
-      "backgroundColor": "#F3F4EF",
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain"
-    },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "9",
+      "buildNumber": "10",
       "bundleIdentifier": "com.yuliang.filament"
     },
     "android": {
@@ -25,7 +20,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.yuliang.filament",
-      "versionCode": 9,
+      "versionCode": 10,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -45,7 +40,17 @@
     "plugins": [
       "expo-secure-store",
       "expo-font",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F3F4EF",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain"
+        }
+      ],
+      "expo-status-bar"
     ]
   }
 }

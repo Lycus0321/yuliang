@@ -27,9 +27,25 @@ import { SpoolCard } from '../components/SpoolCard';
 import { colors, radii, type } from '../theme';
 import type { Spool, SpoolEditorTab } from '../types';
 
-type Filter = 'all' | 'loaded' | 'low' | 'depleted';
-type SortMode = 'default' | 'weightAsc' | 'weightDesc' | 'name';
-type ViewMode = 'grid' | 'list';
+export type Filter = 'all' | 'loaded' | 'low' | 'depleted';
+export type SortMode = 'default' | 'weightAsc' | 'weightDesc' | 'name';
+export type ViewMode = 'grid' | 'list';
+
+export type LibraryViewState = {
+  query: string;
+  filter: Filter;
+  material: string;
+  sort: SortMode;
+  viewMode: ViewMode;
+};
+
+export const defaultLibraryViewState: LibraryViewState = {
+  query: '',
+  filter: 'all',
+  material: 'all',
+  sort: 'default',
+  viewMode: 'grid',
+};
 
 const sortOptions: { id: SortMode; label: string }[] = [
   { id: 'default', label: '默认排序' },
@@ -53,32 +69,35 @@ function materialGroup(spool: Spool) {
 }
 
 type Props = {
+  state: LibraryViewState;
   spools: Spool[];
   loading: boolean;
   refreshing: boolean;
   error: string;
   onRefresh: () => void;
   onOpenSpool: (spool: Spool, tab?: SpoolEditorTab) => void;
+  onStateChange: (state: LibraryViewState) => void;
 };
 
 export function LibraryView({
+  state,
   spools,
   loading,
   refreshing,
   error,
   onRefresh,
   onOpenSpool,
+  onStateChange,
 }: Props) {
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width - 48, 1200);
   const columns = contentWidth >= 1000 ? 3 : contentWidth >= 680 ? 2 : 1;
   const compact = contentWidth < 680;
-  const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState<Filter>('all');
-  const [material, setMaterial] = useState('all');
-  const [sort, setSort] = useState<SortMode>('default');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const { filter, material, query, sort, viewMode } = state;
   const [sortOpen, setSortOpen] = useState(false);
+  const updateState = (patch: Partial<LibraryViewState>) => {
+    onStateChange({ ...state, ...patch });
+  };
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -95,6 +114,8 @@ export function LibraryView({
         spool.filamentName,
         spool.filamentVendor,
         spool.filamentType,
+        spool.color,
+        ...(spool.colors || []),
         spool.note,
         spool.deviceName,
       ]
@@ -162,7 +183,7 @@ export function LibraryView({
               <View style={styles.search}>
                 <Search color={colors.muted} size={17} strokeWidth={1.7} />
                 <TextInput
-                  onChangeText={setQuery}
+                  onChangeText={(query) => updateState({ query })}
                   placeholder="搜索品牌、类型或颜色"
                   placeholderTextColor={colors.muted}
                   style={styles.searchInput}
@@ -191,6 +212,19 @@ export function LibraryView({
             </Pressable>
           </View>
         </View>
+
+        {compact ? (
+          <View style={[styles.search, styles.searchMobile]}>
+            <Search color={colors.muted} size={17} strokeWidth={1.7} />
+            <TextInput
+              onChangeText={(query) => updateState({ query })}
+              placeholder="搜索品牌、类型或颜色"
+              placeholderTextColor={colors.muted}
+              style={styles.searchInput}
+              value={query}
+            />
+          </View>
+        ) : null}
 
         {error ? (
           <View style={styles.errorBanner}>
@@ -227,25 +261,25 @@ export function LibraryView({
               count={activeSpools.length}
               label="全部"
               active={filter === 'all'}
-              onPress={() => setFilter('all')}
+              onPress={() => updateState({ filter: 'all' })}
             />
             <FilterChip
               count={loadedCount}
               label="已装入"
               active={filter === 'loaded'}
-              onPress={() => setFilter('loaded')}
+              onPress={() => updateState({ filter: 'loaded' })}
             />
             <FilterChip
               count={lowCount}
               label="低余量"
               active={filter === 'low'}
-              onPress={() => setFilter('low')}
+              onPress={() => updateState({ filter: 'low' })}
             />
             <FilterChip
               count={depletedCount}
               label="已用尽"
               active={filter === 'depleted'}
-              onPress={() => setFilter('depleted')}
+              onPress={() => updateState({ filter: 'depleted' })}
             />
           </View>
           <View style={styles.toolControls}>
@@ -260,7 +294,7 @@ export function LibraryView({
             <View style={styles.viewToggle}>
               <Pressable
                 accessibilityLabel="卡片视图"
-                onPress={() => setViewMode('grid')}
+                onPress={() => updateState({ viewMode: 'grid' })}
                 style={[
                   styles.viewButton,
                   viewMode === 'grid' && styles.viewButtonActive,
@@ -274,7 +308,7 @@ export function LibraryView({
               </Pressable>
               <Pressable
                 accessibilityLabel="列表视图"
-                onPress={() => setViewMode('list')}
+                onPress={() => updateState({ viewMode: 'list' })}
                 style={[
                   styles.viewButton,
                   viewMode === 'list' && styles.viewButtonActive,
@@ -300,7 +334,7 @@ export function LibraryView({
               key={item}
               label={item === 'all' ? '全部材料' : item}
               active={material === item}
-              onPress={() => setMaterial(item)}
+              onPress={() => updateState({ material: item })}
               subtle
             />
           ))}
@@ -359,9 +393,11 @@ export function LibraryView({
                 </Text>
                 <Pressable
                   onPress={() => {
-                    setQuery('');
-                    setFilter('all');
-                    setMaterial('all');
+                    updateState({
+                      query: '',
+                      filter: 'all',
+                      material: 'all',
+                    });
                   }}
                   style={styles.clearButton}
                 >
@@ -375,7 +411,7 @@ export function LibraryView({
       <SortModal
         onClose={() => setSortOpen(false)}
         onSelect={(value) => {
-          setSort(value);
+          updateState({ sort: value });
           setSortOpen(false);
         }}
         selected={sort}
@@ -515,6 +551,10 @@ const styles = StyleSheet.create({
     height: 40,
     paddingHorizontal: 12,
     width: 264,
+  },
+  searchMobile: {
+    marginTop: 12,
+    width: '100%',
   },
   searchInput: {
     color: colors.ink,

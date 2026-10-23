@@ -38,7 +38,11 @@ import {
 } from './src/preferences';
 import { exportPreferences, importPreferences } from './src/preferencesFile';
 import { CatalogView } from './src/screens/CatalogView';
-import { LibraryView } from './src/screens/LibraryView';
+import {
+  defaultLibraryViewState,
+  LibraryView,
+  type LibraryViewState,
+} from './src/screens/LibraryView';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { SettingsView } from './src/screens/SettingsView';
 import {
@@ -81,6 +85,9 @@ function AppContent() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [view, setView] = useState<AppView>('library');
+  const [libraryState, setLibraryState] = useState<LibraryViewState>(
+    defaultLibraryViewState,
+  );
   const [selectedSpool, setSelectedSpool] = useState<Spool | null>(null);
   const [editorTab, setEditorTab] = useState<SpoolEditorTab>('basic');
   const [forceRfidEdit, setForceRfidEdit] = useState(false);
@@ -112,6 +119,29 @@ function AppContent() {
     return () => style.remove();
   }, []);
 
+  const expireSession = useCallback(async () => {
+    await clearSession();
+    setSession(null);
+    setSpools([]);
+    setCatalog([]);
+    setPresets([]);
+    setSelectedSpool(null);
+    setLibraryState(defaultLibraryViewState);
+    setError('');
+    setView('library');
+  }, []);
+
+  const recoverIfUnauthorized = useCallback(
+    async (err: unknown) => {
+      if (err instanceof BambuApiError && err.status === 401) {
+        await expireSession();
+        return true;
+      }
+      return false;
+    },
+    [expireSession],
+  );
+
   const loadSpools = useCallback(
     async (activeSession: Session, refresh = false) => {
       if (refresh) setRefreshing(true);
@@ -130,20 +160,14 @@ function AppContent() {
           }
         }
       } catch (err) {
-        if (err instanceof BambuApiError && err.status === 401) {
-          await clearSession();
-          setSession(null);
-          setSpools([]);
-          setError('');
-          return;
-        }
+        if (await recoverIfUnauthorized(err)) return;
         setError(err instanceof Error ? err.message : '读取耗材库失败，请重试。');
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [],
+    [recoverIfUnauthorized],
   );
 
   useEffect(() => {
@@ -171,6 +195,7 @@ function AppContent() {
     await writeSession(nextSession);
     setSession(nextSession);
     setView('library');
+    setLibraryState(defaultLibraryViewState);
     setSpools([]);
     void loadSpools(nextSession);
   };
@@ -192,14 +217,7 @@ function AppContent() {
         // The local session is cleared even if the remote service is unreachable.
       }
     }
-    await clearSession();
-    setSession(null);
-    setSpools([]);
-    setCatalog([]);
-    setPresets([]);
-    setSelectedSpool(null);
-    setView('library');
-    setError('');
+    await expireSession();
   };
 
   const handleForceRfidEditChange = (value: boolean) => {
@@ -263,12 +281,17 @@ function AppContent() {
       return;
     }
 
-    const updated = await updateSpool(session, spool, { netWeight: remaining });
-    setSpools((current) =>
-      current.map((item) =>
-        item.id === spool.id ? { ...item, ...updated, netWeight: remaining } : item,
-      ),
-    );
+    try {
+      const updated = await updateSpool(session, spool, { netWeight: remaining });
+      setSpools((current) =>
+        current.map((item) =>
+          item.id === spool.id ? { ...item, ...updated, netWeight: remaining } : item,
+        ),
+      );
+    } catch (err) {
+      await recoverIfUnauthorized(err);
+      throw err;
+    }
   };
 
   const handleDepleteSpool = async (spool: Spool) => {
@@ -277,8 +300,13 @@ function AppContent() {
 
   const handleDeleteSpool = async (spool: Spool) => {
     if (!session) throw new Error('登录状态已失效。');
-    if (!session.demo) await deleteSpool(session, spool.id);
-    setSpools((current) => current.filter((item) => item.id !== spool.id));
+    try {
+      if (!session.demo) await deleteSpool(session, spool.id);
+      setSpools((current) => current.filter((item) => item.id !== spool.id));
+    } catch (err) {
+      await recoverIfUnauthorized(err);
+      throw err;
+    }
   };
 
   const handleSaveBasic = async (spool: Spool, update: SpoolUpdate) => {
@@ -290,37 +318,42 @@ function AppContent() {
       return;
     }
 
-    await updateSpool(session, spool, update);
-    const refreshed = await getSpools(session);
-    const fresh = refreshed.find((item) => item.id === spool.id);
-    if (!fresh) throw new Error('修改后未能从云端重新读取该料盘。');
+    try {
+      await updateSpool(session, spool, update);
+      const refreshed = await getSpools(session);
+      const fresh = refreshed.find((item) => item.id === spool.id);
+      if (!fresh) throw new Error('修改后未能从云端重新读取该料盘。');
 
-    const mismatches: string[] = [];
-    if (update.filamentVendor && fresh.filamentVendor !== update.filamentVendor) {
-      mismatches.push('品牌');
+      const mismatches: string[] = [];
+      if (update.filamentVendor && fresh.filamentVendor !== update.filamentVendor) {
+        mismatches.push('品牌');
+      }
+      if (update.filamentType && fresh.filamentType !== update.filamentType) {
+        mismatches.push('类型');
+      }
+      if (update.filamentName && fresh.filamentName !== update.filamentName) {
+        mismatches.push('耗材型号');
+      }
+      const normalize = (value?: string) => (value || '').replace('#', '').toUpperCase();
+      if (update.color && normalize(fresh.color) !== normalize(update.color)) {
+        mismatches.push('颜色');
+      }
+      if (update.note !== undefined && (fresh.note || '') !== update.note) {
+        mismatches.push('备注');
+      }
+      if (update.displayName !== undefined && (fresh.displayName || '') !== update.displayName) {
+        mismatches.push('名称');
+      }
+      if (mismatches.length) {
+        throw new Error(
+          `云端未保留 ${mismatches.join('、')}。该 RFID 料盘可能由标签数据锁定。`,
+        );
+      }
+      setSpools(refreshed);
+    } catch (err) {
+      await recoverIfUnauthorized(err);
+      throw err;
     }
-    if (update.filamentType && fresh.filamentType !== update.filamentType) {
-      mismatches.push('类型');
-    }
-    if (update.filamentName && fresh.filamentName !== update.filamentName) {
-      mismatches.push('耗材型号');
-    }
-    const normalize = (value?: string) => (value || '').replace('#', '').toUpperCase();
-    if (update.color && normalize(fresh.color) !== normalize(update.color)) {
-      mismatches.push('颜色');
-    }
-    if (update.note !== undefined && (fresh.note || '') !== update.note) {
-      mismatches.push('备注');
-    }
-    if (update.displayName !== undefined && (fresh.displayName || '') !== update.displayName) {
-      mismatches.push('名称');
-    }
-    if (mismatches.length) {
-      throw new Error(
-        `云端未保留 ${mismatches.join('、')}。该 RFID 料盘可能由标签数据锁定。`,
-      );
-    }
-    setSpools(refreshed);
   };
 
   if (booting) return <BootScreen />;
@@ -367,8 +400,10 @@ function AppContent() {
             loading={loading}
             onOpenSpool={handleOpenSpool}
             onRefresh={handleRefresh}
+            onStateChange={setLibraryState}
             refreshing={refreshing}
             spools={spools}
+            state={libraryState}
           />
         ) : view === 'catalog' ? (
           <CatalogView

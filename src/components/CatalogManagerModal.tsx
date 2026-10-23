@@ -520,22 +520,35 @@ export function CatalogManagerView({
       setMobileStep('type');
     } else if (pendingDelete.kind === 'color') {
       const hex = normalizeColorId(pendingDelete.id);
+      const typeKey =
+        selectedBrand && selectedType
+          ? typeOptionId(selectedBrand, selectedType)
+          : null;
+      const removeGlobal = pendingDelete.scope !== 'type' || !typeKey;
+      const customTypeColors = { ...preferences.customTypeColors };
+      if (!removeGlobal && typeKey) {
+        customTypeColors[typeKey] = (customTypeColors[typeKey] || []).filter(
+          (color) => normalizeColorId(color.hex) !== hex,
+        );
+      }
       next = {
         ...preferences,
-        customColors: preferences.customColors.filter(
-          (color) => normalizeColorId(color.hex) !== hex,
-        ),
-        customTypeColors: Object.fromEntries(
-          Object.entries(preferences.customTypeColors).map(([key, colors]) => [
-            key,
-            colors.filter((color) => normalizeColorId(color.hex) !== hex),
-          ]),
-        ),
+        customColors: removeGlobal
+          ? preferences.customColors.filter(
+              (color) => normalizeColorId(color.hex) !== hex,
+            )
+          : preferences.customColors,
+        customTypeColors,
         hiddenColors: preferences.hiddenColors.filter(
-          (item) =>
-            item !== pendingDelete.label &&
-            normalizeColorId(item) !== hex &&
-            !item.endsWith(`/${hex}`),
+          (item) => {
+            if (removeGlobal) {
+              return item !== pendingDelete.label && normalizeColorId(item) !== hex;
+            }
+            return (
+              item !==
+              scopedColorId(selectedBrand!, selectedType!, hex)
+            );
+          },
         ),
       };
     }

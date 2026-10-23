@@ -10,6 +10,7 @@ type SessionData = {
 type Env = {
   SESSION_SECRET: string;
   ASSETS?: Fetcher;
+  LOGIN_RATE_LIMITER?: RateLimit;
 };
 
 const COOKIE_NAME = "yuliang_session";
@@ -478,6 +479,18 @@ async function getCatalog(request: Request, session: SessionData) {
   });
 }
 
+async function isAuthRateLimited(request: Request, env: Env) {
+  if (!env.LOGIN_RATE_LIMITER) return false;
+  const clientKey =
+    request.headers.get("CF-Connecting-IP") ||
+    request.headers.get("X-Forwarded-For") ||
+    "unknown";
+  const outcome = await env.LOGIN_RATE_LIMITER.limit({
+    key: `bambu-auth:${clientKey.split(",")[0].trim()}`,
+  });
+  return !outcome.success;
+}
+
 async function handleApi(request: Request, env: Env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -488,6 +501,14 @@ async function handleApi(request: Request, env: Env) {
   if (path === "/api/health") return json(request, { ok: true });
 
   if (path === "/api/auth/login" && request.method === "POST") {
+    if (await isAuthRateLimited(request, env)) {
+      return json(
+        request,
+        { error: "登录尝试过于频繁，请稍后再试。" },
+        429,
+        { "Retry-After": "60" },
+      );
+    }
     const body = await readJson(request);
     if (!body || !isRegion(body.region) || typeof body.email !== "string") {
       return json(request, { error: "登录参数不完整。" }, 400);
@@ -500,6 +521,14 @@ async function handleApi(request: Request, env: Env) {
   }
 
   if (path === "/api/auth/verify" && request.method === "POST") {
+    if (await isAuthRateLimited(request, env)) {
+      return json(
+        request,
+        { error: "验证码尝试过于频繁，请稍后再试。" },
+        429,
+        { "Retry-After": "60" },
+      );
+    }
     const body = await readJson(request);
     if (
       !body ||
@@ -517,6 +546,14 @@ async function handleApi(request: Request, env: Env) {
   }
 
   if (path === "/api/auth/tfa" && request.method === "POST") {
+    if (await isAuthRateLimited(request, env)) {
+      return json(
+        request,
+        { error: "双重验证尝试过于频繁，请稍后再试。" },
+        429,
+        { "Retry-After": "60" },
+      );
+    }
     const body = await readJson(request);
     if (
       !body ||
