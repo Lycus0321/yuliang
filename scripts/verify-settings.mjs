@@ -22,7 +22,7 @@ try {
     fullPage: true,
   });
 
-  await page.getByText('耗材目录', { exact: true }).click();
+  await page.getByLabel('耗材目录', { exact: true }).click();
   await page.waitForTimeout(180);
   assert(await page.getByLabel('新增品牌', { exact: true }).isVisible());
   await page.screenshot({
@@ -30,6 +30,8 @@ try {
     fullPage: true,
   });
 
+  await page.getByLabel('偏好设置', { exact: true }).click();
+  await page.waitForTimeout(180);
   await page.getByText('耗材与皮重', { exact: true }).click();
   await page.waitForTimeout(180);
   assert(await page.getByText('空盘皮重', { exact: true }).isVisible());
@@ -54,7 +56,7 @@ try {
   await mobile.waitForTimeout(600);
   await mobile.getByText('偏好设置', { exact: true }).first().click();
   await mobile.waitForTimeout(250);
-  await mobile.getByText('耗材目录', { exact: true }).click();
+  await mobile.getByLabel('耗材目录', { exact: true }).click();
   await mobile.waitForTimeout(180);
   const dimensions = await mobile.evaluate(() => ({
     innerWidth: window.innerWidth,

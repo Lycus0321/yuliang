@@ -28,9 +28,6 @@ await desktop.waitForTimeout(300);
 await desktop.screenshot({ path: 'artifacts-app-weight.png', fullPage: true });
 await desktop.getByLabel('关闭').click();
 
-await desktop.getByText('偏好设置', { exact: true }).first().click();
-await desktop.waitForTimeout(350);
-await desktop.screenshot({ path: 'artifacts-app-settings.png', fullPage: true });
 await desktop.getByText('耗材目录', { exact: true }).click();
 await desktop.waitForTimeout(200);
 await desktop.screenshot({ path: 'artifacts-catalog-manager.png', fullPage: true });
@@ -38,6 +35,9 @@ console.log(
   'MANAGER_OPEN:',
   (await desktop.locator('body').innerText()).includes('耗材目录'),
 );
+await desktop.getByText('偏好设置', { exact: true }).first().click();
+await desktop.waitForTimeout(350);
+await desktop.screenshot({ path: 'artifacts-app-settings.png', fullPage: true });
 await desktop.getByText('数据管理', { exact: true }).click();
 await desktop.waitForTimeout(200);
 const downloadPromise = desktop.waitForEvent('download');

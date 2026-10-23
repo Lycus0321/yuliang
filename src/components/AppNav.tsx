@@ -1,10 +1,17 @@
-import { Box, CloudCheck, LayoutGrid, LogOut, SlidersHorizontal } from 'lucide-react-native';
+import {
+  Box,
+  CloudCheck,
+  Layers3,
+  LayoutGrid,
+  LogOut,
+  SlidersHorizontal,
+} from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { Session } from '../types';
 import { colors, radii } from '../theme';
 import { GlassPanel } from './GlassPanel';
 
-export type AppView = 'library' | 'settings';
+export type AppView = 'library' | 'catalog' | 'settings';
 
 type Props = {
   view: AppView;
@@ -16,6 +23,7 @@ type Props = {
 
 const items = [
   { id: 'library' as const, label: '耗材库', icon: LayoutGrid },
+  { id: 'catalog' as const, label: '耗材目录', icon: Layers3 },
   { id: 'settings' as const, label: '偏好设置', icon: SlidersHorizontal },
 ];
 
@@ -38,6 +46,7 @@ export function AppNav({ view, desktop, session, onChangeView, onLogout }: Props
             const active = view === item.id;
             return (
               <Pressable
+                accessibilityLabel={item.label}
                 accessibilityRole="button"
                 key={item.id}
                 onPress={() => onChangeView(item.id)}

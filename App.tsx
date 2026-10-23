@@ -37,6 +37,7 @@ import {
   type AppPreferences,
 } from './src/preferences';
 import { exportPreferences, importPreferences } from './src/preferencesFile';
+import { CatalogView } from './src/screens/CatalogView';
 import { LibraryView } from './src/screens/LibraryView';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { SettingsView } from './src/screens/SettingsView';
@@ -356,6 +357,13 @@ function AppContent() {
             onRefresh={handleRefresh}
             refreshing={refreshing}
             spools={spools}
+          />
+        ) : view === 'catalog' ? (
+          <CatalogView
+            catalog={catalog}
+            onChange={handlePreferencesChange}
+            preferences={preferences}
+            presets={presets}
           />
         ) : (
           <SettingsView

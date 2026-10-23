@@ -61,6 +61,7 @@ export function LibraryView({
   const compact = contentWidth < 680;
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
+  const [material, setMaterial] = useState('all');
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -70,6 +71,7 @@ export function LibraryView({
       if (filter !== 'depleted' && depleted) return false;
       if (filter === 'loaded' && !spool.inPrinter) return false;
       if (filter === 'low' && (spool.netWeight || 0) > 250) return false;
+      if (material !== 'all' && materialGroup(spool) !== material) return false;
       if (!normalized) return true;
       return [
         spool.displayName,
@@ -82,7 +84,7 @@ export function LibraryView({
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(normalized));
     });
-  }, [filter, query, spools]);
+  }, [filter, material, query, spools]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Spool[]>();
@@ -192,24 +194,48 @@ export function LibraryView({
 
         <View style={styles.toolbar}>
           <View style={styles.filters}>
-            <FilterChip label="全部" active={filter === 'all'} onPress={() => setFilter('all')} />
             <FilterChip
+              count={activeSpools.length}
+              label="全部"
+              active={filter === 'all'}
+              onPress={() => setFilter('all')}
+            />
+            <FilterChip
+              count={loadedCount}
               label="已装入"
               active={filter === 'loaded'}
               onPress={() => setFilter('loaded')}
             />
             <FilterChip
+              count={lowCount}
               label="低余量"
               active={filter === 'low'}
               onPress={() => setFilter('low')}
             />
             <FilterChip
+              count={depletedCount}
               label="已用尽"
               active={filter === 'depleted'}
               onPress={() => setFilter('depleted')}
             />
           </View>
         </View>
+
+        <ScrollView
+          contentContainerStyle={styles.materialChips}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          {['all', ...materialOrder].map((item) => (
+            <FilterChip
+              key={item}
+              label={item === 'all' ? '全部材料' : item}
+              active={material === item}
+              onPress={() => setMaterial(item)}
+              subtle
+            />
+          ))}
+        </ScrollView>
 
         {loading && !spools.length ? (
           <View style={styles.loading}>
@@ -255,6 +281,16 @@ export function LibraryView({
                     ? '已用尽耗材默认隐藏，请切换到“已用尽”查看'
                     : '调整搜索或筛选条件'}
                 </Text>
+                <Pressable
+                  onPress={() => {
+                    setQuery('');
+                    setFilter('all');
+                    setMaterial('all');
+                  }}
+                  style={styles.clearButton}
+                >
+                  <Text style={styles.clearText}>清除筛选</Text>
+                </Pressable>
               </View>
             ) : null}
           </View>
@@ -277,21 +313,31 @@ function FilterChip({
   label,
   active,
   onPress,
+  count,
+  subtle,
 }: {
   label: string;
   active: boolean;
   onPress: () => void;
+  count?: number;
+  subtle?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
+        subtle && styles.chipSubtle,
         active && styles.chipActive,
         pressed && styles.pressed,
       ]}
     >
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+      <View style={styles.chipContent}>
+        <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+        {count !== undefined ? (
+          <Text style={[styles.chipCount, active && styles.chipCountActive]}>{count}</Text>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
@@ -486,6 +532,7 @@ const styles = StyleSheet.create({
   },
   filters: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 7,
   },
   chip: {
@@ -493,6 +540,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
+  },
+  chipSubtle: {
+    backgroundColor: 'transparent',
+    borderColor: colors.line,
+    borderWidth: 1,
   },
   chipActive: {
     backgroundColor: colors.primary,
@@ -504,6 +556,23 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: colors.white,
+  },
+  chipContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  chipCount: {
+    color: colors.muted,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+  },
+  chipCountActive: {
+    color: 'rgba(255,255,255,0.76)',
+  },
+  materialChips: {
+    gap: 7,
+    paddingTop: 10,
   },
   grid: {
     alignItems: 'flex-start',
@@ -576,5 +645,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
     marginTop: 3,
+  },
+  clearButton: {
+    marginTop: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  clearText: {
+    color: colors.primary,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
   },
 });

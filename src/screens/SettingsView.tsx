@@ -7,13 +7,12 @@ import {
   GitMerge,
   HardDrive,
   Info,
-  Layers3,
   ListTree,
   LogOut,
   ShieldCheck,
   TriangleAlert,
 } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -24,8 +23,6 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { CatalogManagerView } from '../components/CatalogManagerModal';
-import { brandOptions, filamentCatalog } from '../catalog';
 import {
   PreferencesManagerModal,
   type ManagerKind,
@@ -40,7 +37,7 @@ import {
 import { colors, radii, shadow, type } from '../theme';
 import type { CatalogEntry, Session } from '../types';
 
-type SettingsSection = 'security' | 'catalog' | 'materials' | 'data';
+type SettingsSection = 'security' | 'materials' | 'data';
 
 type Props = {
   catalog: CatalogEntry[];
@@ -97,56 +94,6 @@ export function SettingsView({
     }
   };
 
-  const catalogStats = useMemo(() => {
-    const officialBrands = [
-      ...new Set(
-        [...catalog, ...presets]
-          .map((entry) => entry.vendor)
-          .filter(Boolean),
-      ),
-    ];
-    const resolvedBrands = officialBrands.length ? officialBrands : brandOptions;
-    const allBrands = new Set([
-      ...resolvedBrands,
-      ...preferences.customBrands,
-      ...Object.keys(preferences.customTypes),
-    ]);
-    const allTypes = new Set<string>();
-    for (const entry of [...catalog, ...presets]) {
-      if (entry.vendor && entry.name) {
-        allTypes.add(`${entry.vendor}/${entry.name}`);
-      }
-    }
-    if (!catalog.length && !presets.length) {
-      for (const [brand, types] of Object.entries(filamentCatalog)) {
-        for (const item of types) allTypes.add(`${brand}/${item}`);
-      }
-    }
-    for (const [brand, types] of Object.entries(preferences.customTypes)) {
-      for (const item of types) allTypes.add(`${brand}/${item}`);
-    }
-    const customColorCount =
-      preferences.customColors.length +
-      Object.values(preferences.customTypeColors).reduce(
-        (count, items) => count + items.length,
-        0,
-      );
-    return {
-      brands: allBrands.size,
-      types: allTypes.size,
-      customColors: customColorCount,
-      tareDefaults: Object.keys(preferences.typeTareDefaults).length,
-    };
-  }, [
-    catalog,
-    presets,
-    preferences.customBrands,
-    preferences.customColors,
-    preferences.customTypeColors,
-    preferences.customTypes,
-    preferences.typeTareDefaults,
-  ]);
-
   const allTare = allTarePresets(preferences);
   const allExtra = allExtraPresets(preferences);
   const defaultTare =
@@ -173,12 +120,6 @@ export function SettingsView({
         icon={<ShieldCheck color={section === 'security' ? colors.primary : colors.muted} size={17} />}
         label="账户与安全"
         onPress={() => setSection('security')}
-      />
-      <SettingsNavItem
-        active={section === 'catalog'}
-        icon={<Layers3 color={section === 'catalog' ? colors.primary : colors.muted} size={17} />}
-        label="耗材目录"
-        onPress={() => setSection('catalog')}
       />
       <SettingsNavItem
         active={section === 'materials'}
@@ -299,31 +240,6 @@ export function SettingsView({
                     action={<StatusTag label={session.demo ? '演示模式' : '已连接'} />}
                   />
                 </SettingsBlock>
-              </>
-            ) : null}
-
-            {section === 'catalog' ? (
-              <>
-                <PanelHeading
-                  title="耗材目录"
-                  description="按品牌 → 型号 → 颜色和默认皮重直接维护"
-                />
-                <SettingsBlock>
-                  <View style={styles.metricGrid}>
-                    <Metric value={catalogStats.brands} label="品牌" />
-                    <Metric value={catalogStats.types} label="型号" />
-                    <Metric value={catalogStats.customColors} label="自定义颜色" />
-                    <Metric value={catalogStats.tareDefaults} label="型号默认皮重" />
-                  </View>
-                  <InfoBox text="隐藏品牌会联动隐藏型号和颜色。已有云端料盘不会被自动修改。" />
-                </SettingsBlock>
-                <CatalogManagerView
-                  embedded
-                  catalog={catalog}
-                  onChange={onPreferencesChange}
-                  preferences={preferences}
-                  presets={presets}
-                />
               </>
             ) : null}
 
@@ -661,15 +577,6 @@ function StatusTag({
     <View style={styles.statusTag}>
       {icon}
       <Text style={styles.statusText}>{label}</Text>
-    </View>
-  );
-}
-
-function Metric({ value, label }: { value: number; label: string }) {
-  return (
-    <View style={styles.metric}>
-      <Text style={styles.metricValue}>{value}</Text>
-      <Text style={styles.metricLabel}>{label}</Text>
     </View>
   );
 }
@@ -1046,29 +953,6 @@ const styles = StyleSheet.create({
   secondaryButtonHover: {
     backgroundColor: colors.background,
     borderColor: colors.mintStrong,
-  },
-  metricGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  metric: {
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    flex: 1,
-    minWidth: 110,
-    padding: 12,
-  },
-  metricValue: {
-    color: colors.ink,
-    fontFamily: 'Inter_700Bold',
-    fontSize: 22,
-  },
-  metricLabel: {
-    color: colors.muted,
-    fontFamily: 'Inter_400Regular',
-    fontSize: 13,
-    marginTop: 1,
   },
   treePreview: {
     gap: 1,
