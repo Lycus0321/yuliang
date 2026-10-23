@@ -665,7 +665,12 @@ export function SpoolEditorModal({
                 ) : null}
               </View>
             ) : (
-              <View style={styles.weightStack}>
+              <View
+                style={[
+                  styles.weightStack,
+                  dropdown && styles.weightStackOpen,
+                ]}
+              >
                 <View style={styles.weightHero}>
                   <View>
                     <Text style={styles.heroLabel}>当前剩余</Text>
@@ -743,22 +748,6 @@ export function SpoolEditorModal({
                     value={`${extra.grams} g`}
                     onPress={() => setDropdown(dropdown === 'extra' ? null : 'extra')}
                   />
-                  {dropdown === 'extra' ? (
-                    <SelectMenu placement="up">
-                      {extraPresets.map((preset) => (
-                        <SelectOption
-                          key={preset.id}
-                          label={preset.name}
-                          meta={`${preset.grams} g`}
-                          selected={preset.id === extraId}
-                          onPress={() => {
-                            setExtraId(preset.id);
-                            setDropdown(null);
-                          }}
-                        />
-                      ))}
-                    </SelectMenu>
-                  ) : null}
                 </View>
 
                 <View style={styles.result}>
@@ -888,6 +877,16 @@ export function SpoolEditorModal({
             </Pressable>
           </View>
         </View>
+        <ExtraPresetSheet
+          onClose={() => setDropdown(null)}
+          onSelect={(presetId) => {
+            setExtraId(presetId);
+            setDropdown(null);
+          }}
+          presets={extraPresets}
+          selectedId={extraId}
+          visible={dropdown === 'extra'}
+        />
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -904,6 +903,56 @@ function locationText(spool: Spool) {
       : 'AMS';
   const slot = typeof spool.slotId === 'number' ? `${spool.slotId + 1} 号位` : '';
   return [ams, slot].filter(Boolean).join(' · ');
+}
+
+function ExtraPresetSheet({
+  onClose,
+  onSelect,
+  presets,
+  selectedId,
+  visible,
+}: {
+  onClose: () => void;
+  onSelect: (presetId: string) => void;
+  presets: { id: string; name: string; grams: number }[];
+  selectedId: string;
+  visible: boolean;
+}) {
+  if (!visible) return null;
+  return (
+    <View style={styles.extraSheetOverlay}>
+      <Pressable accessibilityLabel="关闭其他重量选项" onPress={onClose} style={styles.extraSheetBackdrop} />
+      <View style={styles.extraSheet}>
+        <View style={styles.extraSheetHeader}>
+          <View>
+            <Text style={styles.extraSheetTitle}>其他重量</Text>
+            <Text style={styles.extraSheetMeta}>选择空盘之外的附加重量</Text>
+          </View>
+          <Pressable
+            accessibilityLabel="关闭"
+            onPress={onClose}
+            style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
+          >
+            <X color={colors.ink} size={19} strokeWidth={1.7} />
+          </Pressable>
+        </View>
+        <ScrollView
+          contentContainerStyle={styles.extraSheetList}
+          showsVerticalScrollIndicator={false}
+        >
+          {presets.map((preset) => (
+            <SelectOption
+              key={preset.id}
+              label={preset.name}
+              meta={`${preset.grams} g`}
+              selected={preset.id === selectedId}
+              onPress={() => onSelect(preset.id)}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    </View>
+  );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -950,23 +999,8 @@ function SelectTrigger({
   );
 }
 
-function SelectMenu({
-  children,
-  placement = 'down',
-}: {
-  children: React.ReactNode;
-  placement?: 'down' | 'up';
-}) {
-  return (
-    <View
-      style={[
-        styles.selectMenu,
-        placement === 'up' ? styles.selectMenuUp : styles.selectMenuDown,
-      ]}
-    >
-      {children}
-    </View>
-  );
+function SelectMenu({ children }: { children: React.ReactNode }) {
+  return <View style={styles.selectMenu}>{children}</View>;
 }
 
 function SelectOption({
@@ -1010,6 +1044,53 @@ const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFill,
     backgroundColor: colors.overlay,
+  },
+  extraSheetOverlay: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    elevation: 3000,
+    justifyContent: 'center',
+    padding: 18,
+    zIndex: 3000,
+  },
+  extraSheetBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.overlay,
+  },
+  extraSheet: {
+    backgroundColor: colors.white,
+    borderColor: colors.line,
+    borderRadius: 16,
+    borderWidth: 1,
+    maxHeight: '72%',
+    maxWidth: 420,
+    overflow: 'hidden',
+    width: '100%',
+    ...shadow,
+  },
+  extraSheetHeader: {
+    alignItems: 'center',
+    borderBottomColor: colors.line,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  extraSheetTitle: {
+    color: colors.ink,
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 17,
+  },
+  extraSheetMeta: {
+    color: colors.muted,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  extraSheetList: {
+    gap: 2,
+    padding: 8,
   },
   dialog: {
     alignSelf: 'center',
@@ -1254,16 +1335,11 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
     right: 0,
+    top: 55,
     zIndex: 1000,
     padding: 5,
     ...shadow,
     elevation: 24,
-  },
-  selectMenuDown: {
-    top: 55,
-  },
-  selectMenuUp: {
-    bottom: 55,
   },
   selectOption: {
     alignItems: 'center',
@@ -1345,6 +1421,11 @@ const styles = StyleSheet.create({
   },
   weightStack: {
     gap: 14,
+  },
+  weightStackOpen: {
+    elevation: 1000,
+    position: 'relative',
+    zIndex: 1000,
   },
   weightHero: {
     alignItems: 'center',
