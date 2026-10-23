@@ -12,6 +12,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ViewStyle,
 } from 'react-native';
@@ -19,6 +20,7 @@ import { colors, radii, rgba, shadow } from '../theme';
 import type { Spool } from '../types';
 
 type Props = {
+  layout?: 'grid' | 'list';
   spool: Spool;
   onPress: () => void;
   style?: ViewStyle | ViewStyle[];
@@ -46,7 +48,9 @@ function colorValue(spool: Spool) {
   return value.startsWith('#') ? value : `#${value}`;
 }
 
-export function SpoolCard({ spool, onPress, style }: Props) {
+export function SpoolCard({ layout = 'grid', spool, onPress, style }: Props) {
+  const { width } = useWindowDimensions();
+  const compactList = width < 640;
   const [hovered, setHovered] = useState(false);
   const lift = useRef(new Animated.Value(0)).current;
   const total = Math.max(1, spool.totalNetWeight || 1000);
@@ -72,6 +76,113 @@ export function SpoolCard({ spool, onPress, style }: Props) {
   };
 
   const translateY = lift.interpolate({ inputRange: [0, 1], outputRange: [0, -1] });
+
+  if (layout === 'list') {
+    return (
+      <Animated.View
+        style={[
+          styles.shell,
+          styles.shellList,
+          style,
+          {
+            transform: [{ translateY }],
+            shadowOpacity: hovered ? 0.12 : 0.06,
+          },
+        ]}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`${spoolName(spool)}，剩余 ${remaining} 克`}
+          onHoverIn={() => updateHover(true)}
+          onHoverOut={() => updateHover(false)}
+          onPress={onPress}
+          style={({ pressed }) => [styles.card, styles.cardList, pressed && styles.pressed]}
+        >
+          <LinearGradient
+            colors={gradientColors}
+            end={{ x: 1, y: 1 }}
+            pointerEvents="none"
+            start={{ x: 0, y: 0 }}
+            style={styles.cardGradient}
+          />
+          <View style={styles.listRow}>
+            <View style={styles.listPrimary}>
+              <View style={[styles.titleSwatch, { backgroundColor: accent }]}>
+                <View style={styles.titleSwatchCore} />
+              </View>
+              <View style={styles.titleWrap}>
+                <Text numberOfLines={1} style={styles.title}>
+                  {spoolName(spool)}
+                </Text>
+                <Text numberOfLines={1} style={styles.subline}>
+                  {spool.filamentVendor || '未知品牌'} ·{' '}
+                  {spool.filamentName || spool.filamentType || '未知材质'}
+                </Text>
+                {compactList && locationLabel ? (
+                  <Text numberOfLines={1} style={styles.listLocation}>
+                    {locationLabel}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+
+            {!compactList ? (
+              <View style={styles.listMeta}>
+                {locationLabel ? (
+                  <View style={styles.locationBadge}>
+                    <CloudCheck color={colors.primary} size={13} strokeWidth={1.8} />
+                    <Text style={styles.locationText}>{locationLabel}</Text>
+                  </View>
+                ) : null}
+                <View style={styles.listModeRow}>
+                  {remaining === 0 ? (
+                    <View style={[styles.mode, styles.modeEmpty]}>
+                      <Text style={[styles.modeText, styles.modeTextEmpty]}>已用尽</Text>
+                    </View>
+                  ) : null}
+                  <View style={[styles.mode, rfid && styles.modeRfid]}>
+                    {rfid ? (
+                      <Nfc color={colors.primary} size={14} strokeWidth={1.7} />
+                    ) : (
+                      <Pencil color={colors.muted} size={13} strokeWidth={1.7} />
+                    )}
+                    <Text style={[styles.modeText, rfid && styles.modeTextRfid]}>
+                      {rfid ? 'RFID' : '手动'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ) : null}
+
+            <View style={[styles.listMetric, compactList && styles.listMetricCompact]}>
+              <View style={[styles.metric, styles.metricList]}>
+                <Text style={[styles.grams, styles.listGrams]}>{remaining}</Text>
+                <Text style={styles.unit}>g</Text>
+                <Text style={styles.percent}>{Math.round(percent)}%</Text>
+              </View>
+              <View style={styles.progress}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    remaining === 0 && styles.progressEmpty,
+                    { width: `${percent}%` as `${number}%` },
+                  ]}
+                />
+              </View>
+            </View>
+
+            <Pressable
+              accessibilityLabel="更多操作"
+              onPress={onPress}
+              style={({ pressed }) => [styles.menu, pressed && styles.pressed]}
+            >
+              <MoreHorizontal color={colors.muted} size={18} />
+            </Pressable>
+          </View>
+        </Pressable>
+      </Animated.View>
+    );
+  }
 
   return (
     <Animated.View
@@ -207,11 +318,19 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 3,
   },
+  shellList: {
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 12,
+  },
   card: {
     borderRadius: radii.medium,
     overflow: 'hidden',
     padding: 13,
     position: 'relative',
+  },
+  cardList: {
+    paddingHorizontal: 12,
+    paddingVertical: 11,
   },
   cardGradient: {
     ...StyleSheet.absoluteFill,
@@ -222,6 +341,47 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     minWidth: 0,
+  },
+  listRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  listPrimary: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 10,
+    minWidth: 0,
+  },
+  listMeta: {
+    gap: 5,
+    width: 180,
+  },
+  listModeRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 5,
+  },
+  listLocation: {
+    color: colors.muted,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  listMetric: {
+    width: 150,
+  },
+  listMetricCompact: {
+    width: 96,
+  },
+  metricList: {
+    marginTop: 0,
+  },
+  listGrams: {
+    fontSize: 21,
+    lineHeight: 25,
   },
   head: {
     alignItems: 'center',

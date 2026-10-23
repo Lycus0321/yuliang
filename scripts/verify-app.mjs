@@ -19,6 +19,13 @@ console.log(
     cards: document.querySelectorAll('[aria-label*="剩余"]').length,
   })),
 );
+await desktop.getByLabel('列表视图', { exact: true }).click();
+await desktop.waitForTimeout(200);
+await desktop.screenshot({ path: 'artifacts-library-view-list.png', fullPage: true });
+await desktop.getByLabel(/排序方式/).click();
+await desktop.getByLabel('余量从少到多', { exact: true }).click();
+await desktop.waitForTimeout(200);
+await desktop.getByLabel('卡片视图', { exact: true }).click();
 
 await desktop.getByText('曜石黑').first().click();
 await desktop.waitForTimeout(400);

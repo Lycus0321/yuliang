@@ -1,6 +1,10 @@
 import {
   AlertTriangle,
+  Check,
+  ChevronDown,
   Layers3,
+  LayoutGrid,
+  List,
   RefreshCw,
   Search,
   SlidersHorizontal,
@@ -8,6 +12,7 @@ import {
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -23,6 +28,15 @@ import { colors, radii, type } from '../theme';
 import type { Spool } from '../types';
 
 type Filter = 'all' | 'loaded' | 'low' | 'depleted';
+type SortMode = 'default' | 'weightAsc' | 'weightDesc' | 'name';
+type ViewMode = 'grid' | 'list';
+
+const sortOptions: { id: SortMode; label: string }[] = [
+  { id: 'default', label: '默认排序' },
+  { id: 'weightAsc', label: '余量从少到多' },
+  { id: 'weightDesc', label: '余量从多到少' },
+  { id: 'name', label: '名称排序' },
+];
 
 const materialOrder = ['PLA', 'PETG', 'ABS', 'ASA', 'TPU', 'PC', 'PA', '其他'];
 
@@ -62,6 +76,9 @@ export function LibraryView({
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [material, setMaterial] = useState('all');
+  const [sort, setSort] = useState<SortMode>('default');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortOpen, setSortOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -88,7 +105,18 @@ export function LibraryView({
 
   const grouped = useMemo(() => {
     const map = new Map<string, Spool[]>();
-    for (const spool of filtered) {
+    const sorted = [...filtered].sort((left, right) => {
+      if (sort === 'weightAsc') return (left.netWeight || 0) - (right.netWeight || 0);
+      if (sort === 'weightDesc') return (right.netWeight || 0) - (left.netWeight || 0);
+      if (sort === 'name') {
+        return (left.displayName || left.filamentName || '').localeCompare(
+          right.displayName || right.filamentName || '',
+          'zh-CN',
+        );
+      }
+      return 0;
+    });
+    for (const spool of sorted) {
       const group = materialGroup(spool);
       map.set(group, [...(map.get(group) || []), spool]);
     }
@@ -100,7 +128,7 @@ export function LibraryView({
       }
       return left.localeCompare(right);
     });
-  }, [filtered]);
+  }, [filtered, sort]);
 
   const activeSpools = spools.filter((spool) => (spool.netWeight || 0) > 0);
   const depletedCount = spools.length - activeSpools.length;
@@ -108,6 +136,7 @@ export function LibraryView({
   const loadedCount = activeSpools.filter((spool) => spool.inPrinter).length;
   const lowCount = activeSpools.filter((spool) => (spool.netWeight || 0) <= 250).length;
   const materials = new Set(activeSpools.map(materialGroup)).size;
+  const sortLabel = sortOptions.find((option) => option.id === sort)?.label || '排序';
 
   return (
     <ScrollView
@@ -219,6 +248,46 @@ export function LibraryView({
               onPress={() => setFilter('depleted')}
             />
           </View>
+          <View style={styles.toolControls}>
+            <Pressable
+              accessibilityLabel={`排序方式：${sortLabel}`}
+              onPress={() => setSortOpen(true)}
+              style={({ pressed }) => [styles.sortButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.sortText}>{sortLabel}</Text>
+              <ChevronDown color={colors.muted} size={15} strokeWidth={1.7} />
+            </Pressable>
+            <View style={styles.viewToggle}>
+              <Pressable
+                accessibilityLabel="卡片视图"
+                onPress={() => setViewMode('grid')}
+                style={[
+                  styles.viewButton,
+                  viewMode === 'grid' && styles.viewButtonActive,
+                ]}
+              >
+                <LayoutGrid
+                  color={viewMode === 'grid' ? colors.primary : colors.muted}
+                  size={17}
+                  strokeWidth={1.7}
+                />
+              </Pressable>
+              <Pressable
+                accessibilityLabel="列表视图"
+                onPress={() => setViewMode('list')}
+                style={[
+                  styles.viewButton,
+                  viewMode === 'list' && styles.viewButtonActive,
+                ]}
+              >
+                <List
+                  color={viewMode === 'list' ? colors.primary : colors.muted}
+                  size={17}
+                  strokeWidth={1.7}
+                />
+              </Pressable>
+            </View>
+          </View>
         </View>
 
         <ScrollView
@@ -259,13 +328,18 @@ export function LibraryView({
                     </View>
                     <Text style={styles.groupMeta}>剩余 {(remaining / 1000).toFixed(2)} kg</Text>
                   </View>
-                  <View style={styles.grid}>
+                  <View style={[styles.grid, viewMode === 'list' && styles.list]}>
                     {items.map((spool) => (
                       <SpoolCard
                         key={spool.id}
+                        layout={viewMode}
                         onPress={() => onOpenSpool(spool)}
                         spool={spool}
-                        style={{ width: `${100 / columns - 1.2}%` }}
+                        style={
+                          viewMode === 'list'
+                            ? styles.listCard
+                            : { width: `${100 / columns - 1.2}%` }
+                        }
                       />
                     ))}
                   </View>
@@ -296,6 +370,15 @@ export function LibraryView({
           </View>
         )}
       </View>
+      <SortModal
+        onClose={() => setSortOpen(false)}
+        onSelect={(value) => {
+          setSort(value);
+          setSortOpen(false);
+        }}
+        selected={sort}
+        visible={sortOpen}
+      />
     </ScrollView>
   );
 }
@@ -306,6 +389,49 @@ function Stat({ value, label }: { value: number; label: string }) {
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
+  );
+}
+
+function SortModal({
+  onClose,
+  onSelect,
+  selected,
+  visible,
+}: {
+  onClose: () => void;
+  onSelect: (value: SortMode) => void;
+  selected: SortMode;
+  visible: boolean;
+}) {
+  return (
+    <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
+      <View style={styles.sortOverlay}>
+        <Pressable accessibilityLabel="关闭排序" onPress={onClose} style={styles.sortBackdrop} />
+        <View style={styles.sortMenu}>
+          <Text style={styles.sortTitle}>排序方式</Text>
+          {sortOptions.map((option) => {
+            const active = option.id === selected;
+            return (
+              <Pressable
+                accessibilityLabel={option.label}
+                key={option.id}
+                onPress={() => onSelect(option.id)}
+                style={({ pressed }) => [
+                  styles.sortOption,
+                  active && styles.sortOptionActive,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={[styles.sortOptionText, active && styles.sortOptionTextActive]}>
+                  {option.label}
+                </Text>
+                {active ? <Check color={colors.primary} size={17} strokeWidth={1.8} /> : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -527,6 +653,8 @@ const styles = StyleSheet.create({
   toolbar: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
     justifyContent: 'space-between',
     marginTop: 16,
   },
@@ -570,6 +698,47 @@ const styles = StyleSheet.create({
   chipCountActive: {
     color: 'rgba(255,255,255,0.76)',
   },
+  toolControls: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  sortButton: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: radii.control,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 7,
+    minHeight: 36,
+    paddingHorizontal: 11,
+  },
+  sortText: {
+    color: colors.ink,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+  },
+  viewToggle: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: radii.control,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 2,
+    padding: 3,
+  },
+  viewButton: {
+    alignItems: 'center',
+    borderRadius: 7,
+    height: 30,
+    justifyContent: 'center',
+    width: 32,
+  },
+  viewButtonActive: {
+    backgroundColor: colors.mint,
+  },
   materialChips: {
     gap: 7,
     paddingTop: 10,
@@ -580,6 +749,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 12,
     marginTop: 14,
+  },
+  list: {
+    flexDirection: 'column',
+    gap: 8,
+  },
+  listCard: {
+    width: '100%',
   },
   groups: {
     gap: 24,
@@ -655,5 +831,51 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontFamily: 'Inter_600SemiBold',
     fontSize: 13,
+  },
+  sortOverlay: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+  },
+  sortBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.overlay,
+  },
+  sortMenu: {
+    backgroundColor: colors.surface,
+    borderColor: colors.line,
+    borderRadius: radii.medium,
+    borderWidth: 1,
+    maxWidth: 340,
+    padding: 8,
+    width: '100%',
+  },
+  sortTitle: {
+    color: colors.muted,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 13,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+  },
+  sortOption: {
+    alignItems: 'center',
+    borderRadius: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 44,
+    paddingHorizontal: 10,
+  },
+  sortOptionActive: {
+    backgroundColor: colors.mint,
+  },
+  sortOptionText: {
+    color: colors.ink,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 14,
+  },
+  sortOptionTextActive: {
+    color: colors.primary,
+    fontFamily: 'Inter_600SemiBold',
   },
 });
