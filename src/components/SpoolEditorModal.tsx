@@ -744,7 +744,7 @@ export function SpoolEditorModal({
                     onPress={() => setDropdown(dropdown === 'extra' ? null : 'extra')}
                   />
                   {dropdown === 'extra' ? (
-                    <SelectMenu>
+                    <SelectMenu placement="up">
                       {extraPresets.map((preset) => (
                         <SelectOption
                           key={preset.id}
@@ -950,8 +950,23 @@ function SelectTrigger({
   );
 }
 
-function SelectMenu({ children }: { children: React.ReactNode }) {
-  return <View style={styles.selectMenu}>{children}</View>;
+function SelectMenu({
+  children,
+  placement = 'down',
+}: {
+  children: React.ReactNode;
+  placement?: 'down' | 'up';
+}) {
+  return (
+    <View
+      style={[
+        styles.selectMenu,
+        placement === 'up' ? styles.selectMenuUp : styles.selectMenuDown,
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 function SelectOption({
@@ -1150,6 +1165,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   selectFieldOpen: {
+    elevation: 1000,
     zIndex: 1000,
   },
   field: {
@@ -1238,11 +1254,16 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
     right: 0,
-    top: 55,
     zIndex: 1000,
     padding: 5,
     ...shadow,
     elevation: 24,
+  },
+  selectMenuDown: {
+    top: 55,
+  },
+  selectMenuUp: {
+    bottom: 55,
   },
   selectOption: {
     alignItems: 'center',
