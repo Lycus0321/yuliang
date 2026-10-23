@@ -47,7 +47,13 @@ import {
   writeSession,
 } from './src/storage';
 import { colors, radii } from './src/theme';
-import type { CatalogEntry, Session, Spool, SpoolUpdate } from './src/types';
+import type {
+  CatalogEntry,
+  Session,
+  Spool,
+  SpoolEditorTab,
+  SpoolUpdate,
+} from './src/types';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -76,6 +82,7 @@ function AppContent() {
   const [error, setError] = useState('');
   const [view, setView] = useState<AppView>('library');
   const [selectedSpool, setSelectedSpool] = useState<Spool | null>(null);
+  const [editorTab, setEditorTab] = useState<SpoolEditorTab>('basic');
   const [forceRfidEdit, setForceRfidEdit] = useState(false);
   const [preferences, setPreferences] = useState<AppPreferences>(defaultPreferences);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
@@ -170,6 +177,11 @@ function AppContent() {
 
   const handleRefresh = () => {
     if (session) void loadSpools(session, true);
+  };
+
+  const handleOpenSpool = (spool: Spool, tab: SpoolEditorTab = 'basic') => {
+    setEditorTab(tab);
+    setSelectedSpool(spool);
   };
 
   const handleLogout = async () => {
@@ -353,7 +365,7 @@ function AppContent() {
           <LibraryView
             error={error}
             loading={loading}
-            onOpenSpool={setSelectedSpool}
+            onOpenSpool={handleOpenSpool}
             onRefresh={handleRefresh}
             refreshing={refreshing}
             spools={spools}
@@ -401,6 +413,7 @@ function AppContent() {
       <SpoolEditorModal
         catalog={catalog}
         forceRfidEdit={forceRfidEdit}
+        initialTab={editorTab}
         onClose={() => setSelectedSpool(null)}
         onDelete={handleDeleteSpool}
         onDeplete={handleDepleteSpool}

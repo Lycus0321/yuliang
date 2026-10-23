@@ -1,9 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   CloudCheck,
-  MoreHorizontal,
   Nfc,
   Pencil,
+  Scale,
+  SquarePen,
 } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import {
@@ -23,6 +24,8 @@ type Props = {
   layout?: 'grid' | 'list';
   spool: Spool;
   onPress: () => void;
+  onEdit?: () => void;
+  onWeigh?: () => void;
   style?: ViewStyle | ViewStyle[];
 };
 
@@ -48,9 +51,18 @@ function colorValue(spool: Spool) {
   return value.startsWith('#') ? value : `#${value}`;
 }
 
-export function SpoolCard({ layout = 'grid', spool, onPress, style }: Props) {
+export function SpoolCard({
+  layout = 'grid',
+  spool,
+  onPress,
+  onEdit,
+  onWeigh,
+  style,
+}: Props) {
   const { width } = useWindowDimensions();
   const compactList = width < 640;
+  const editAction = onEdit || onPress;
+  const weighAction = onWeigh || onPress;
   const [hovered, setHovered] = useState(false);
   const lift = useRef(new Animated.Value(0)).current;
   const total = Math.max(1, spool.totalNetWeight || 1000);
@@ -76,6 +88,30 @@ export function SpoolCard({ layout = 'grid', spool, onPress, style }: Props) {
   };
 
   const translateY = lift.interpolate({ inputRange: [0, 1], outputRange: [0, -1] });
+  const quickActions = (
+    <View style={styles.quickActions}>
+      <Pressable
+        accessibilityLabel="称重"
+        accessibilityRole="button"
+        onPress={weighAction}
+        style={({ pressed }) => [
+          styles.quickButton,
+          styles.quickButtonPrimary,
+          pressed && styles.pressed,
+        ]}
+      >
+        <Scale color={colors.primary} size={16} strokeWidth={1.7} />
+      </Pressable>
+      <Pressable
+        accessibilityLabel="编辑"
+        accessibilityRole="button"
+        onPress={editAction}
+        style={({ pressed }) => [styles.quickButton, pressed && styles.pressed]}
+      >
+        <SquarePen color={colors.muted} size={16} strokeWidth={1.7} />
+      </Pressable>
+    </View>
+  );
 
   if (layout === 'list') {
     return (
@@ -171,15 +207,9 @@ export function SpoolCard({ layout = 'grid', spool, onPress, style }: Props) {
               </View>
             </View>
 
-            <Pressable
-              accessibilityLabel="更多操作"
-              onPress={onPress}
-              style={({ pressed }) => [styles.menu, pressed && styles.pressed]}
-            >
-              <MoreHorizontal color={colors.muted} size={18} />
-            </Pressable>
           </View>
         </Pressable>
+        {quickActions}
       </Animated.View>
     );
   }
@@ -251,13 +281,6 @@ export function SpoolCard({ layout = 'grid', spool, onPress, style }: Props) {
                 </View>
               </>
             ) : null}
-            <Pressable
-              accessibilityLabel="更多操作"
-              onPress={onPress}
-              style={({ pressed }) => [styles.menu, pressed && styles.pressed]}
-            >
-              <MoreHorizontal color={colors.muted} size={18} />
-            </Pressable>
           </View>
 
           {locationLabel ? (
@@ -303,6 +326,7 @@ export function SpoolCard({ layout = 'grid', spool, onPress, style }: Props) {
           </View>
         </View>
       </Pressable>
+      {quickActions}
     </Animated.View>
   );
 }
@@ -317,6 +341,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 24,
     elevation: 3,
+    overflow: 'hidden',
+    position: 'relative',
   },
   shellList: {
     shadowOffset: { width: 0, height: 3 },
@@ -346,6 +372,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
+    paddingRight: 62,
   },
   listPrimary: {
     alignItems: 'center',
@@ -387,6 +414,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 6,
+    paddingRight: 62,
   },
   titleSwatch: {
     alignItems: 'center',
@@ -422,12 +450,25 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 1,
   },
-  menu: {
+  quickActions: {
     alignItems: 'center',
+    flexDirection: 'row',
+    gap: 2,
+    position: 'absolute',
+    right: 13,
+    top: 13,
+    zIndex: 2,
+  },
+  quickButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(29,29,31,0.045)',
     borderRadius: 8,
     height: 28,
     justifyContent: 'center',
     width: 28,
+  },
+  quickButtonPrimary: {
+    backgroundColor: colors.mint,
   },
   meta: {
     alignItems: 'center',

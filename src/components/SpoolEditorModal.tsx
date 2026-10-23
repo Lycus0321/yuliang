@@ -40,9 +40,9 @@ import {
   findTarePresetForFilament,
 } from '../preferencesCatalog';
 import { colors, radii, shadow } from '../theme';
-import type { CatalogEntry, Spool, SpoolUpdate } from '../types';
+import type { CatalogEntry, Spool, SpoolEditorTab, SpoolUpdate } from '../types';
 
-type Tab = 'basic' | 'weight';
+type Tab = SpoolEditorTab;
 type Dropdown = 'brand' | 'type' | 'color' | 'tare' | 'extra' | null;
 
 const spoolTareFallback = { id: 'generic-200', name: '通用空盘', grams: 200 };
@@ -51,6 +51,7 @@ const extraFallback = { id: 'extra-none', name: '无', grams: 0 };
 type Props = {
   spool: Spool | null;
   visible: boolean;
+  initialTab?: Tab;
   forceRfidEdit: boolean;
   catalog: CatalogEntry[];
   presets: CatalogEntry[];
@@ -81,6 +82,7 @@ function includedSelected<T>(options: T[], commonCount: number, selected: T, equ
 export function SpoolEditorModal({
   spool,
   visible,
+  initialTab = 'basic',
   forceRfidEdit,
   catalog,
   presets,
@@ -115,7 +117,7 @@ export function SpoolEditorModal({
 
   useEffect(() => {
     if (!spool || !visible) return;
-    setTab('basic');
+    setTab(initialTab);
     setName(spool.displayName || '');
     setNote(spool.note || '');
     setBrand(spool.filamentVendor || 'Bambu Lab');
@@ -170,7 +172,7 @@ export function SpoolEditorModal({
     setActionPending(null);
     setPendingAction(null);
     setError('');
-  }, [spool, visible, preferences]);
+  }, [initialTab, spool, visible, preferences]);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;

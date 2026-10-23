@@ -27,12 +27,13 @@ await desktop.getByLabel('余量从少到多', { exact: true }).click();
 await desktop.waitForTimeout(200);
 await desktop.getByLabel('卡片视图', { exact: true }).click();
 
-await desktop.getByText('曜石黑').first().click();
+await desktop.getByLabel('称重', { exact: true }).first().click();
 await desktop.waitForTimeout(400);
-await desktop.screenshot({ path: 'artifacts-app-modal.png', fullPage: true });
-await desktop.getByText('重量', { exact: true }).click();
-await desktop.waitForTimeout(300);
 await desktop.screenshot({ path: 'artifacts-app-weight.png', fullPage: true });
+await desktop.getByLabel('关闭').click();
+await desktop.getByLabel('编辑', { exact: true }).first().click();
+await desktop.waitForTimeout(300);
+await desktop.screenshot({ path: 'artifacts-app-modal.png', fullPage: true });
 await desktop.getByLabel('关闭').click();
 
 await desktop.getByText('耗材目录', { exact: true }).click();

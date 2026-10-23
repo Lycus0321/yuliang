@@ -49,6 +49,8 @@ export type SpoolUpdate = {
   filamentId?: string;
 };
 
+export type SpoolEditorTab = 'basic' | 'weight';
+
 export type CatalogEntry = {
   vendor: string;
   material: string;

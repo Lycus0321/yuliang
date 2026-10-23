@@ -25,7 +25,7 @@ import {
 } from 'react-native';
 import { SpoolCard } from '../components/SpoolCard';
 import { colors, radii, type } from '../theme';
-import type { Spool } from '../types';
+import type { Spool, SpoolEditorTab } from '../types';
 
 type Filter = 'all' | 'loaded' | 'low' | 'depleted';
 type SortMode = 'default' | 'weightAsc' | 'weightDesc' | 'name';
@@ -58,7 +58,7 @@ type Props = {
   refreshing: boolean;
   error: string;
   onRefresh: () => void;
-  onOpenSpool: (spool: Spool) => void;
+  onOpenSpool: (spool: Spool, tab?: SpoolEditorTab) => void;
 };
 
 export function LibraryView({
@@ -333,7 +333,9 @@ export function LibraryView({
                       <SpoolCard
                         key={spool.id}
                         layout={viewMode}
+                        onEdit={() => onOpenSpool(spool, 'basic')}
                         onPress={() => onOpenSpool(spool)}
+                        onWeigh={() => onOpenSpool(spool, 'weight')}
                         spool={spool}
                         style={
                           viewMode === 'list'
