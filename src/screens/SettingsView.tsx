@@ -171,7 +171,7 @@ export function SettingsView({
             <View style={styles.nav}>{settingsNavigation}</View>
           )}
 
-          <View style={styles.panel}>
+          <View style={[styles.panel, compact && styles.panelCompact]}>
             {section === 'security' ? (
               <>
                 <PanelHeading
@@ -720,6 +720,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   layoutCompact: {
+    alignItems: 'stretch',
     flexDirection: 'column',
   },
   nav: {
@@ -782,6 +783,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     overflow: 'hidden',
+  },
+  panelCompact: {
+    alignSelf: 'stretch',
+    width: '100%',
   },
   panelHeading: {
     borderBottomColor: colors.line,
