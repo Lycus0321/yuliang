@@ -365,9 +365,7 @@ export function SpoolCard({
 const styles = StyleSheet.create({
   shell: {
     backgroundColor: 'rgba(255,255,255,0.84)',
-    borderColor: colors.line,
     borderRadius: radii.medium,
-    borderWidth: 1,
     shadowColor: '#1A2B23',
     shadowOffset: { width: 0, height: 8 },
     shadowRadius: 24,

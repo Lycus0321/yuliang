@@ -48,10 +48,12 @@ await desktop.waitForTimeout(350);
 await desktop.screenshot({ path: 'artifacts-app-settings.png', fullPage: true });
 await desktop.getByText('数据管理', { exact: true }).click();
 await desktop.waitForTimeout(200);
-const downloadPromise = desktop.waitForEvent('download');
 await desktop.getByText('导出 JSON', { exact: true }).click();
-const download = await downloadPromise;
-console.log('EXPORT_FILE:', download.suggestedFilename());
+const exportedJson = await desktop
+  .getByLabel('偏好 JSON 输入框', { exact: true })
+  .inputValue();
+console.log('EXPORT_JSON_LENGTH:', exportedJson.length);
+await desktop.getByLabel('关闭导出窗口', { exact: true }).click();
 
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
 mobile.on('pageerror', (error) => errors.push(error.message));

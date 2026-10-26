@@ -37,7 +37,6 @@ import {
   savePreferences,
   type AppPreferences,
 } from './src/preferences';
-import { exportPreferences, importPreferences } from './src/preferencesFile';
 import { CatalogView } from './src/screens/CatalogView';
 import {
   defaultLibraryViewState,
@@ -282,15 +281,24 @@ function AppContent() {
     });
   };
 
-  const handleExportPreferences = async () => {
-    await exportPreferences(preferences);
-  };
-
-  const handleImportPreferences = async (mode: 'merge' | 'replace') => {
-    const imported = await importPreferences();
-    if (!imported) return false;
+  const handleImportPreferences = async (
+    mode: 'merge' | 'replace',
+    content: string,
+  ) => {
+    if (!content.trim()) {
+      throw new Error('请先在输入框中粘贴偏好 JSON。');
+    }
+    let imported: unknown;
+    try {
+      imported = JSON.parse(content);
+    } catch {
+      throw new Error('输入内容不是有效的 JSON。');
+    }
+    if (!imported || typeof imported !== 'object' || Array.isArray(imported)) {
+      throw new Error('JSON 内容必须是偏好数据对象。');
+    }
+    const normalized = normalizePreferences(imported);
     if (mode === 'replace') {
-      const normalized = normalizePreferences(imported);
       const confirmed = await confirmAction({
         title: '替换当前本地偏好？',
         message:
@@ -304,8 +312,8 @@ function AppContent() {
     }
     const next =
       mode === 'replace'
-        ? normalizePreferences(imported)
-        : mergePreferences(preferences, normalizePreferences(imported));
+        ? normalized
+        : mergePreferences(preferences, normalized);
     setPreferences(next);
     setForceRfidEdit(next.forceRfidEdit);
     await savePreferences(next);
@@ -459,7 +467,6 @@ function AppContent() {
             catalog={catalog}
             forceRfidEdit={forceRfidEdit}
             session={session}
-            onExportPreferences={handleExportPreferences}
             onForceRfidEditChange={handleForceRfidEditChange}
             onImportPreferences={handleImportPreferences}
             onLogout={handleLogout}

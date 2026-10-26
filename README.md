@@ -65,7 +65,7 @@ npx serve prototype -l 4173
 
 Web 端会通过 Worker 的 `/api/catalog` 同步 Bambu 官方耗材目录和用户切片预设，原生端使用相同的直连逻辑获取目录。目录不可用时回退到内置预设。每个料盘的皮重和其他重量选择会保存在本机。
 
-本地偏好使用 AsyncStorage 持久化，JSON 导出会生成 `yuliang-preferences-YYYY-MM-DD.json`。导入支持合并和完整替换两种模式，覆盖 RFID 开关、默认皮重、自定义选项、隐藏项和每盘重量记忆。
+本地偏好使用 AsyncStorage 持久化。数据管理通过 JSON 输入框手动导出和导入，不生成文件、不读取剪切板；导入仍支持合并和完整替换两种模式，覆盖 RFID 开关、默认皮重、自定义选项、隐藏项和每盘重量记忆。
 
 ## 移动端构建
 

@@ -4,7 +4,6 @@ import {
   Download,
   FileUp,
   Gauge,
-  GitMerge,
   HardDrive,
   Info,
   ListTree,
@@ -27,6 +26,11 @@ import {
   PreferencesManagerModal,
   type ManagerKind,
 } from '../components/PreferencesManagerModal';
+import {
+  PreferencesTransferModal,
+  type PreferencesImportMode,
+  type PreferencesTransferMode,
+} from '../components/PreferencesTransferModal';
 import type { AppPreferences } from '../preferences';
 import {
   allExtraPresets,
@@ -46,8 +50,10 @@ type Props = {
   onForceRfidEditChange: (value: boolean) => void;
   preferences: AppPreferences;
   presets: CatalogEntry[];
-  onImportPreferences: (mode: 'merge' | 'replace') => Promise<boolean>;
-  onExportPreferences: () => Promise<void>;
+  onImportPreferences: (
+    mode: 'merge' | 'replace',
+    content: string,
+  ) => Promise<boolean>;
   onPreferencesChange: (preferences: AppPreferences) => void;
   onLogout: () => void;
 };
@@ -59,7 +65,6 @@ export function SettingsView({
   preferences,
   onForceRfidEditChange,
   onImportPreferences,
-  onExportPreferences,
   onPreferencesChange,
   presets,
   onLogout,
@@ -70,6 +75,10 @@ export function SettingsView({
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [section, setSection] = useState<SettingsSection>('security');
   const [manager, setManager] = useState<ManagerKind | null>(null);
+  const [transferMode, setTransferMode] =
+    useState<PreferencesTransferMode | null>(null);
+  const [transferValue, setTransferValue] = useState('');
+  const [transferError, setTransferError] = useState('');
 
   const showNotice = (message: string) => {
     if (noticeTimer.current) clearTimeout(noticeTimer.current);
@@ -84,22 +93,28 @@ export function SettingsView({
     [],
   );
 
-  const runImport = async (mode: 'merge' | 'replace') => {
-    try {
-      const imported = await onImportPreferences(mode);
-      if (!imported) return;
-      showNotice(mode === 'merge' ? '偏好已合并导入' : '偏好已完整替换');
-    } catch (err) {
-      showNotice(err instanceof Error ? err.message : 'JSON 导入失败');
-    }
+  const openExport = () => {
+    setTransferMode('export');
+    setTransferValue(JSON.stringify(preferences, null, 2));
+    setTransferError('');
   };
 
-  const runExport = async () => {
+  const openImport = () => {
+    setTransferMode('import');
+    setTransferValue('');
+    setTransferError('');
+  };
+
+  const runImport = async (mode: PreferencesImportMode) => {
     try {
-      await onExportPreferences();
-      showNotice('偏好 JSON 已导出');
+      const imported = await onImportPreferences(mode, transferValue);
+      if (!imported) return;
+      setTransferMode(null);
+      setTransferValue('');
+      setTransferError('');
+      showNotice(mode === 'merge' ? '偏好已合并导入' : '偏好已完整替换');
     } catch (err) {
-      showNotice(err instanceof Error ? err.message : 'JSON 导出失败');
+      setTransferError(err instanceof Error ? err.message : 'JSON 导入失败');
     }
   };
 
@@ -297,32 +312,26 @@ export function SettingsView({
               <>
                 <PanelHeading
                   title="数据管理"
-                  description="偏好数据只保存在本机，可通过 JSON 在不同设备间迁移"
+                  description="通过 JSON 输入框手动迁移本机偏好数据"
                 />
-                <SettingsBlock title="偏好文件">
+                <SettingsBlock title="偏好数据">
                   <View style={[styles.dataGrid, compact && styles.dataGridCompact]}>
                     <DataAction
                       icon={<Download color={colors.primary} size={21} />}
                       title="导出 JSON"
-                      meta="生成包含目录、皮重和显示偏好的文件"
-                      onPress={runExport}
-                    />
-                    <DataAction
-                      icon={<GitMerge color={colors.primary} size={21} />}
-                      title="合并导入"
-                      meta="按 ID 与内容去重，保留本机现有偏好"
-                      onPress={() => void runImport('merge')}
+                      meta="在输入框中展示 JSON，可手动选择并复制"
+                      onPress={openExport}
                     />
                     <DataAction
                       icon={<FileUp color={colors.primary} size={21} />}
-                      title="完整替换"
-                      meta="使用导入文件覆盖当前本地偏好"
-                      onPress={() => void runImport('replace')}
+                      title="导入 JSON"
+                      meta="粘贴 JSON 后选择合并导入或完整替换"
+                      onPress={openImport}
                     />
                   </View>
                   <InfoBox
                     tone="primary"
-                    text="导出文件不包含 Bambu Token、Cookie 或任何账号凭证。"
+                    text="JSON 不包含 Bambu Token、Cookie 或任何账号凭证。"
                   />
                 </SettingsBlock>
                 <SettingsBlock title="应用状态" last>
@@ -368,6 +377,21 @@ export function SettingsView({
       onClose={() => setManager(null)}
       preferences={preferences}
       presets={presets}
+    />
+    <PreferencesTransferModal
+      error={transferError}
+      mode={transferMode}
+      onChange={(value) => {
+        setTransferValue(value);
+        setTransferError('');
+      }}
+      onClose={() => {
+        setTransferMode(null);
+        setTransferValue('');
+        setTransferError('');
+      }}
+      onImport={(mode) => void runImport(mode)}
+      value={transferValue}
     />
     </View>
   );

@@ -43,12 +43,33 @@ try {
   await page.getByText('数据管理', { exact: true }).click();
   await page.waitForTimeout(180);
   assert(await page.getByLabel('导出 JSON', { exact: true }).isVisible());
-  assert(await page.getByLabel('合并导入', { exact: true }).isVisible());
-  assert(await page.getByLabel('完整替换', { exact: true }).isVisible());
+  assert(await page.getByLabel('导入 JSON', { exact: true }).isVisible());
   await page.screenshot({
     path: 'artifacts-settings-data.png',
     fullPage: true,
   });
+  await page.getByLabel('导出 JSON', { exact: true }).click();
+  const exportedJson = await page
+    .getByLabel('偏好 JSON 输入框', { exact: true })
+    .inputValue();
+  assert(exportedJson.includes('"customBrands"'));
+  await page.getByLabel('关闭导出窗口', { exact: true }).click();
+  await page.getByLabel('导入 JSON', { exact: true }).click();
+  await page.getByLabel('偏好 JSON 输入框', { exact: true }).fill('{');
+  await page.getByLabel('合并导入', { exact: true }).click();
+  assert(
+    await page.getByText('输入内容不是有效的 JSON。', { exact: true }).isVisible(),
+  );
+  await page.getByLabel('偏好 JSON 输入框', { exact: true }).fill(exportedJson);
+  await page.getByLabel('合并导入', { exact: true }).click();
+  await page.waitForTimeout(200);
+  assert(await page.getByText('偏好已合并导入', { exact: true }).isVisible());
+  await page.getByLabel('导入 JSON', { exact: true }).click();
+  await page.getByLabel('偏好 JSON 输入框', { exact: true }).fill(exportedJson);
+  page.once('dialog', (dialog) => dialog.accept());
+  await page.getByLabel('完整替换', { exact: true }).click();
+  await page.waitForTimeout(200);
+  assert(await page.getByText('偏好已完整替换', { exact: true }).isVisible());
 
   const mobile = await context.newPage();
   await mobile.setViewportSize({ width: 320, height: 640 });

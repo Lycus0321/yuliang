@@ -2,14 +2,14 @@
   "expo": {
     "name": "余量",
     "slug": "filament-scale",
-    "version": "1.1.5",
+    "version": "1.1.6",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F3F4EF",
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "17",
+      "buildNumber": "18",
       "bundleIdentifier": "com.yuliang.filament"
     },
     "android": {
@@ -21,7 +21,7 @@
       },
       "package": "com.yuliang.filament",
       "softwareKeyboardLayoutMode": "resize",
-      "versionCode": 17,
+      "versionCode": 18,
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -41,7 +41,6 @@
     "plugins": [
       "expo-secure-store",
       "expo-font",
-      "expo-sharing",
       [
         "expo-splash-screen",
         {
