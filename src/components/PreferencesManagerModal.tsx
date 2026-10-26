@@ -1285,7 +1285,12 @@ function optionRows(
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'center', padding: 16 },
+  overlay: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: colors.overlay },
   dialog: {
     alignSelf: 'center',

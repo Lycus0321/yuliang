@@ -603,7 +603,13 @@ export function CatalogManagerView({
         ) : null}
 
         <CatalogBody embedded={embedded}>
-            <View style={[styles.columns, !desktop && styles.columnsMobile]}>
+            <View
+              style={[
+                styles.columns,
+                embedded && styles.columnsEmbedded,
+                !desktop && styles.columnsMobile,
+              ]}
+            >
               {(desktop || mobileStep === 'brand') ? (
               <View style={[styles.pane, desktop ? styles.brandPane : styles.paneMobile]}>
                 <View style={styles.paneHeader}>
@@ -1288,7 +1294,8 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'center',
-    padding: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
@@ -1396,6 +1403,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     padding: 16,
+  },
+  columnsEmbedded: {
+    paddingHorizontal: 0,
   },
   columnsMobile: {
     flexDirection: 'column',
