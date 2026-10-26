@@ -134,6 +134,9 @@ export function LoginScreen({ onAuthenticated }: Props) {
           <View style={[styles.form, desktop && styles.formDesktop]}>
           <View style={styles.regionControl}>
             <Pressable
+              accessibilityLabel="中国大陆区"
+              accessibilityRole="button"
+              accessibilityState={{ selected: region === 'china' }}
               onPress={() => setRegion('china')}
               style={[styles.regionItem, region === 'china' && styles.regionActive]}
             >
@@ -147,6 +150,9 @@ export function LoginScreen({ onAuthenticated }: Props) {
               </Text>
             </Pressable>
             <Pressable
+              accessibilityLabel="国际区"
+              accessibilityRole="button"
+              accessibilityState={{ selected: region === 'global' }}
               onPress={() => setRegion('global')}
               style={[styles.regionItem, region === 'global' && styles.regionActive]}
             >
@@ -165,6 +171,7 @@ export function LoginScreen({ onAuthenticated }: Props) {
           <View style={styles.field}>
             <Text style={styles.label}>Bambu 账号</Text>
             <TextInput
+              accessibilityLabel="Bambu 账号"
               autoCapitalize="none"
               autoComplete="email"
               editable={stage === 'credentials'}
@@ -181,6 +188,7 @@ export function LoginScreen({ onAuthenticated }: Props) {
             <View style={styles.field}>
               <Text style={styles.label}>密码</Text>
               <TextInput
+              accessibilityLabel="Bambu 密码"
                 autoCapitalize="none"
                 autoComplete="current-password"
                 onChangeText={setPassword}
@@ -218,7 +226,11 @@ export function LoginScreen({ onAuthenticated }: Props) {
           )}
 
           {message ? <Text style={styles.message}>{message}</Text> : null}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {error ? (
+            <Text accessibilityLiveRegion="polite" style={styles.error}>
+              {error}
+            </Text>
+          ) : null}
 
           <Pressable
             accessibilityRole="button"

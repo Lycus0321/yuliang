@@ -58,6 +58,7 @@ import type {
   SpoolEditorTab,
   SpoolUpdate,
 } from './src/types';
+import { confirmAction } from './src/confirm';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -210,6 +211,13 @@ function AppContent() {
   };
 
   const handleLogout = async () => {
+    const confirmed = await confirmAction({
+      title: '退出当前账号？',
+      message: '退出后将清除本机保存的登录态，未保存的编辑不会保留。',
+      confirmLabel: '退出登录',
+      destructive: true,
+    });
+    if (!confirmed) return;
     if (session && !session.demo) {
       try {
         await logoutSession(session);
@@ -220,7 +228,17 @@ function AppContent() {
     await expireSession();
   };
 
-  const handleForceRfidEditChange = (value: boolean) => {
+  const handleForceRfidEditChange = async (value: boolean) => {
+    if (value && !forceRfidEdit) {
+      const confirmed = await confirmAction({
+        title: '开启 RFID 强制修改？',
+        message:
+          '该模式会直接覆盖 RFID 料盘的品牌、型号和颜色，可能与 Bambu Studio、Handy 或实体标签数据冲突。',
+        confirmLabel: '了解风险并开启',
+        destructive: true,
+      });
+      if (!confirmed) return;
+    }
     setForceRfidEdit(value);
     setPreferences((current) => {
       const next = { ...current, forceRfidEdit: value };
@@ -260,6 +278,19 @@ function AppContent() {
   const handleImportPreferences = async (mode: 'merge' | 'replace') => {
     const imported = await importPreferences();
     if (!imported) return false;
+    if (mode === 'replace') {
+      const normalized = normalizePreferences(imported);
+      const confirmed = await confirmAction({
+        title: '替换当前本地偏好？',
+        message:
+          `将覆盖品牌 ${normalized.customBrands.length + Object.keys(normalized.customTypes).length} 项、` +
+          `颜色 ${normalized.customColors.length} 项、` +
+          `皮重预设 ${normalized.customTarePresets.length + normalized.customExtraPresets.length} 项和全部显示设置。`,
+        confirmLabel: '确认替换',
+        destructive: true,
+      });
+      if (!confirmed) return false;
+    }
     const next =
       mode === 'replace'
         ? normalizePreferences(imported)

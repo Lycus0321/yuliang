@@ -64,6 +64,7 @@ export function SpoolCard({
   const editAction = onEdit || onPress;
   const weighAction = onWeigh || onPress;
   const [hovered, setHovered] = useState(false);
+  const [hoveredAction, setHoveredAction] = useState<'weigh' | 'edit' | null>(null);
   const lift = useRef(new Animated.Value(0)).current;
   const total = Math.max(1, spool.totalNetWeight || 1000);
   const remaining = Math.max(0, Math.round(spool.netWeight || 0));
@@ -90,26 +91,48 @@ export function SpoolCard({
   const translateY = lift.interpolate({ inputRange: [0, 1], outputRange: [0, -1] });
   const quickActions = (
     <View style={styles.quickActions}>
-      <Pressable
-        accessibilityLabel="称重"
-        accessibilityRole="button"
-        onPress={weighAction}
-        style={({ pressed }) => [
-          styles.quickButton,
-          styles.quickButtonPrimary,
-          pressed && styles.pressed,
-        ]}
-      >
-        <Scale color={colors.primary} size={16} strokeWidth={1.7} />
-      </Pressable>
-      <Pressable
-        accessibilityLabel="编辑"
-        accessibilityRole="button"
-        onPress={editAction}
-        style={({ pressed }) => [styles.quickButton, pressed && styles.pressed]}
-      >
-        <SquarePen color={colors.muted} size={16} strokeWidth={1.7} />
-      </Pressable>
+      <View style={styles.quickActionWrap}>
+        <Pressable
+          accessibilityLabel="称重"
+          accessibilityHint="打开这盘耗材的重量校准"
+          accessibilityRole="button"
+          hitSlop={10}
+          onHoverIn={() => setHoveredAction('weigh')}
+          onHoverOut={() => setHoveredAction(null)}
+          onPress={weighAction}
+          style={({ pressed }) => [
+            styles.quickButton,
+            styles.quickButtonPrimary,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Scale color={colors.primary} size={16} strokeWidth={1.7} />
+        </Pressable>
+        {hoveredAction === 'weigh' ? (
+          <View pointerEvents="none" style={styles.quickTooltip}>
+            <Text style={styles.quickTooltipText}>称重</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.quickActionWrap}>
+        <Pressable
+          accessibilityLabel="编辑"
+          accessibilityHint="打开这盘耗材的基本信息"
+          accessibilityRole="button"
+          hitSlop={10}
+          onHoverIn={() => setHoveredAction('edit')}
+          onHoverOut={() => setHoveredAction(null)}
+          onPress={editAction}
+          style={({ pressed }) => [styles.quickButton, pressed && styles.pressed]}
+        >
+          <SquarePen color={colors.muted} size={16} strokeWidth={1.7} />
+        </Pressable>
+        {hoveredAction === 'edit' ? (
+          <View pointerEvents="none" style={styles.quickTooltip}>
+            <Text style={styles.quickTooltipText}>编辑</Text>
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 
@@ -498,6 +521,9 @@ const styles = StyleSheet.create({
     top: 20,
     zIndex: 2,
   },
+  quickActionWrap: {
+    position: 'relative',
+  },
   quickButton: {
     alignItems: 'center',
     backgroundColor: 'rgba(29,29,31,0.045)',
@@ -508,6 +534,21 @@ const styles = StyleSheet.create({
   },
   quickButtonPrimary: {
     backgroundColor: colors.mint,
+  },
+  quickTooltip: {
+    backgroundColor: colors.ink,
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    position: 'absolute',
+    right: 0,
+    top: 29,
+    zIndex: 4,
+  },
+  quickTooltipText: {
+    color: colors.white,
+    fontFamily: 'Inter_500Medium',
+    fontSize: 11,
   },
   meta: {
     alignItems: 'center',

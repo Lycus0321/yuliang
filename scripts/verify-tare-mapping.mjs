@@ -37,6 +37,7 @@ try {
     .locator('..')
     .innerText();
   assert(draftTare.includes('205 g'));
+  page.once('dialog', async (dialog) => dialog.accept());
   await page.getByLabel('关闭').click();
 
   await page.getByText('哑光白').first().click();

@@ -44,6 +44,7 @@ import {
 import { colors, radii, shadow } from '../theme';
 import type { CatalogEntry } from '../types';
 import { ColorPicker } from './ColorPicker';
+import { confirmAction } from '../confirm';
 
 export type ManagerKind = 'brand' | 'type' | 'color' | 'tare' | 'extra';
 type ManagerMode = 'list' | 'create' | 'edit';
@@ -109,6 +110,7 @@ export function PreferencesManagerModal({
   const [formError, setFormError] = useState('');
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [editingColorId, setEditingColorId] = useState<string | null>(null);
+  const [formDirty, setFormDirty] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [mode, setMode] = useState<ManagerMode>('list');
   const [pendingDelete, setPendingDelete] = useState<{
@@ -119,6 +121,7 @@ export function PreferencesManagerModal({
   useEffect(() => {
     setName('');
     setValue(kind === 'color' ? '#000000' : '');
+    setFormDirty(false);
     setPresetBrand('');
     setPresetType('');
     setPresetPicker(null);
@@ -373,6 +376,7 @@ export function PreferencesManagerModal({
     setEditingPresetId(id);
     setName(preset.name);
     setValue(String(preset.grams));
+    setFormDirty(false);
     setPresetBrand(preset.brand || '');
     setPresetType(preset.type || '');
     setFormError('');
@@ -388,6 +392,7 @@ export function PreferencesManagerModal({
     setEditingColorId(normalizeColorId(color.hex));
     setName(color.name);
     setValue(normalizeColorId(color.hex));
+    setFormDirty(false);
     setFormError('');
     setMode('edit');
     setPendingDelete(null);
@@ -403,6 +408,7 @@ export function PreferencesManagerModal({
     setEditingColorId(null);
     setName('');
     setValue(kind === 'color' ? '#000000' : '');
+    setFormDirty(false);
     setPresetBrand('');
     setPresetType('');
     setPresetPicker(null);
@@ -713,16 +719,30 @@ export function PreferencesManagerModal({
     );
   };
 
+  const requestClose = async () => {
+    if (formDirty && mode !== 'list') {
+      const confirmed = await confirmAction({
+        title: '放弃未保存的修改？',
+        message: '当前预设或颜色表单内容尚未保存。',
+        confirmLabel: '放弃修改',
+        cancelLabel: '继续编辑',
+        destructive: true,
+      });
+      if (!confirmed) return;
+    }
+    onClose();
+  };
+
   return (
-    <Modal animationType="fade" onRequestClose={onClose} transparent visible>
+    <Modal animationType="fade" onRequestClose={requestClose} transparent visible>
       <View style={styles.overlay}>
-        <Pressable onPress={onClose} style={styles.backdrop} />
+        <Pressable onPress={requestClose} style={styles.backdrop} />
         <View style={styles.dialog}>
           <View style={styles.header}>
             <Text style={styles.title}>
               {mode === 'list' ? titles[kind] : formTitle}
             </Text>
-            <Pressable accessibilityLabel="关闭" onPress={onClose} style={styles.close}>
+            <Pressable accessibilityLabel="关闭" onPress={requestClose} style={styles.close}>
               <X color={colors.ink} size={19} />
             </Pressable>
           </View>
@@ -826,18 +846,30 @@ export function PreferencesManagerModal({
               {kind === 'color' ? (
                 <View style={styles.colorEditor}>
                   <TextInput
-                    onChangeText={setName}
+                    onChangeText={(next) => {
+                      setName(next);
+                      setFormDirty(true);
+                    }}
                     placeholder="颜色名称"
                     placeholderTextColor={colors.muted}
                     style={styles.input}
                     value={name}
                   />
-                  <ColorPicker onChange={setValue} value={value} />
+                  <ColorPicker
+                    onChange={(next) => {
+                      setValue(next);
+                      setFormDirty(true);
+                    }}
+                    value={value}
+                  />
                 </View>
               ) : (
                 <View style={styles.formStack}>
                   <TextInput
-                    onChangeText={setName}
+                    onChangeText={(next) => {
+                      setName(next);
+                      setFormDirty(true);
+                    }}
                     placeholder={
                       kind === 'type'
                         ? '品牌/型号，例如 SUNLU/PLA+'
@@ -850,7 +882,10 @@ export function PreferencesManagerModal({
                   {isPreset ? (
                     <TextInput
                       keyboardType="numeric"
-                      onChangeText={setValue}
+                      onChangeText={(next) => {
+                        setValue(next);
+                        setFormDirty(true);
+                      }}
                       placeholder="克重"
                       placeholderTextColor={colors.muted}
                       style={styles.input}
@@ -942,6 +977,7 @@ export function PreferencesManagerModal({
               } else {
                 setPresetType(value);
               }
+              setFormDirty(true);
               setPresetPicker(null);
             }}
           />

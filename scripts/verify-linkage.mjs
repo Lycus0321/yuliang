@@ -30,7 +30,7 @@ await page.getByText('PLA+', { exact: true }).click();
 await page.waitForTimeout(200);
 console.log(
   'LINKED_COLOR:',
-  await page.getByText('颜色 · 通用色与自定义').locator('..').innerText(),
+  await page.getByText(/颜色 ·/).first().locator('..').innerText(),
 );
 await page.screenshot({ path: 'artifacts-linkage.png', fullPage: true });
 

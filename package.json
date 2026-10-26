@@ -1,6 +1,6 @@
 {
   "name": "filament-app",
-  "version": "1.0.10",
+  "version": "1.1.0",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -8,7 +8,7 @@
     "@fontsource-variable/inter": "^5.3.0",
     "@phosphor-icons/web": "^2.1.2",
     "@react-native-async-storage/async-storage": "2.2.0",
-    "expo": "~58.0.17",
+    "expo": "~58.0.19",
     "expo-blur": "~58.0.5",
     "expo-document-picker": "~58.0.4",
     "expo-file-system": "~58.0.10",

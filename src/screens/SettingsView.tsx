@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   TriangleAlert,
 } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -67,13 +67,22 @@ export function SettingsView({
   const { width } = useWindowDimensions();
   const compact = width < 760;
   const [notice, setNotice] = useState('');
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [section, setSection] = useState<SettingsSection>('security');
   const [manager, setManager] = useState<ManagerKind | null>(null);
 
   const showNotice = (message: string) => {
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
     setNotice(message);
-    setTimeout(() => setNotice(''), 1600);
+    noticeTimer.current = setTimeout(() => setNotice(''), 1600);
   };
+
+  useEffect(
+    () => () => {
+      if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    },
+    [],
+  );
 
   const runImport = async (mode: 'merge' | 'replace') => {
     try {
@@ -137,6 +146,7 @@ export function SettingsView({
   );
 
   return (
+    <View style={styles.root}>
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <View style={styles.pageHead}>
@@ -231,9 +241,11 @@ export function SettingsView({
                       <View>
                         <Text style={styles.settingTitle}>会话恢复</Text>
                         <Text style={styles.settingMeta}>
-                          {Platform.OS === 'web'
-                            ? '登录态由 Cloudflare Worker 管理，令牌不会进入浏览器 JavaScript。'
-                            : '登录令牌保存在系统安全存储中，并直接用于连接拓竹服务。'}
+                          {session.demo
+                            ? '演示会话仅保存在本机，不包含真实账号凭证或云端登录态。'
+                            : Platform.OS === 'web'
+                              ? '登录态由 Cloudflare Worker 管理，令牌不会进入浏览器 JavaScript。'
+                              : '登录令牌保存在系统安全存储中，并直接用于连接拓竹服务。'}
                         </Text>
                       </View>
                     }
@@ -344,20 +356,21 @@ export function SettingsView({
         </View>
       </View>
 
-      {notice ? (
-        <View style={styles.notice}>
-          <Text style={styles.noticeText}>{notice}</Text>
-        </View>
-      ) : null}
-      <PreferencesManagerModal
-        catalog={catalog}
-        kind={manager}
-        onChange={onPreferencesChange}
-        onClose={() => setManager(null)}
-        preferences={preferences}
-        presets={presets}
-      />
     </ScrollView>
+    {notice ? (
+      <View accessibilityLiveRegion="polite" style={styles.notice}>
+        <Text style={styles.noticeText}>{notice}</Text>
+      </View>
+    ) : null}
+    <PreferencesManagerModal
+      catalog={catalog}
+      kind={manager}
+      onChange={onPreferencesChange}
+      onClose={() => setManager(null)}
+      preferences={preferences}
+      presets={presets}
+    />
+    </View>
   );
 }
 
@@ -655,6 +668,9 @@ function uniqueById<T extends { id: string }>(items: T[]) {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   scroll: {
     paddingBottom: 44,
   },
@@ -1042,15 +1058,19 @@ const styles = StyleSheet.create({
     opacity: 0.62,
   },
   notice: {
+    alignItems: 'center',
     alignSelf: 'center',
     backgroundColor: 'rgba(255,255,255,0.96)',
     borderColor: colors.line,
     borderRadius: 12,
     borderWidth: 1,
     bottom: 24,
+    left: 16,
     paddingHorizontal: 16,
     paddingVertical: 10,
     position: 'absolute',
+    right: 16,
+    zIndex: 20,
     ...shadow,
   },
   noticeText: {

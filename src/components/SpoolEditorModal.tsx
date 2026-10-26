@@ -8,7 +8,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react-native';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -38,9 +38,11 @@ import {
   availableTarePresets,
   colorsForType,
   findTarePresetForFilament,
+  typeOptionId,
 } from '../preferencesCatalog';
 import { colors, radii, shadow } from '../theme';
 import type { CatalogEntry, Spool, SpoolEditorTab, SpoolUpdate } from '../types';
+import { confirmAction } from '../confirm';
 
 type Tab = SpoolEditorTab;
 type Dropdown = 'brand' | 'type' | 'color' | 'tare' | 'extra' | null;
@@ -114,9 +116,25 @@ export function SpoolEditorModal({
   const [actionPending, setActionPending] = useState<'deplete' | 'delete' | null>(null);
   const [pendingAction, setPendingAction] = useState<'deplete' | 'delete' | null>(null);
   const [error, setError] = useState('');
+  const baselineRef = useRef<{
+    name: string;
+    note: string;
+    brand: string;
+    type: string;
+    colorName: string;
+    colorHex: string;
+    tareId: string;
+    extraId: string;
+    gross: string;
+  } | null>(null);
+  const [dirtyTracking, setDirtyTracking] = useState(false);
 
   useEffect(() => {
-    if (!spool || !visible) return;
+    if (!spool || !visible) {
+      setDirtyTracking(false);
+      return;
+    }
+    setDirtyTracking(false);
     setTab(initialTab);
     setName(spool.displayName || '');
     setNote(spool.note || '');
@@ -124,10 +142,10 @@ export function SpoolEditorModal({
     setType(spool.filamentName || spool.filamentType || 'PLA Basic');
     const hex = normalizeColor(spool.color || '#808080');
     setColorHex(hex);
-    setColorName(
+    const initialColorName =
       bambuColors.find((item) => item.hex.toUpperCase() === hex.toUpperCase())?.name ||
-        '自定义颜色',
-    );
+      '自定义颜色';
+    setColorName(initialColorName);
     setDropdown(null);
     setExpandedBrands(false);
     setExpandedTypes(false);
@@ -161,13 +179,24 @@ export function SpoolEditorModal({
       extraFallback;
     setTareId(savedTare.id);
     setExtraId(savedExtra.id);
-    setGross(
-      String(
-        Math.round(
-          (spool.netWeight || 0) + savedTare.grams + savedExtra.grams,
-        ),
+    const initialGross = String(
+      Math.round(
+        (spool.netWeight || 0) + savedTare.grams + savedExtra.grams,
       ),
     );
+    setGross(initialGross);
+    baselineRef.current = {
+      name: spool.displayName || '',
+      note: spool.note || '',
+      brand: spool.filamentVendor || 'Bambu Lab',
+      type: spool.filamentName || spool.filamentType || 'PLA Basic',
+      colorName: initialColorName,
+      colorHex: hex,
+      tareId: savedTare.id,
+      extraId: savedExtra.id,
+      gross: initialGross,
+    };
+    setDirtyTracking(true);
     setSaving(false);
     setActionPending(null);
     setPendingAction(null);
@@ -192,14 +221,26 @@ export function SpoolEditorModal({
     extraPresets.find((item) => item.id === extraId) ||
     extraPresets[0] ||
     extraFallback;
-  const grossValue = Number(gross || 0);
+  const normalizedGross = gross.trim().replace(',', '.');
+  const grossValue = normalizedGross ? Number(normalizedGross) : Number.NaN;
   const tareTotal = tare.grams + extra.grams;
-  const net = Math.max(0, grossValue - tareTotal);
-  const grossBelowTare =
-    tab === 'weight' &&
-    Number.isFinite(grossValue) &&
-    grossValue > 0 &&
-    grossValue < tareTotal;
+  const net = Number.isFinite(grossValue)
+    ? Math.max(0, grossValue - tareTotal)
+    : 0;
+  const weightError =
+    !normalizedGross
+      ? '请输入整盘总重。'
+      : !Number.isFinite(grossValue)
+        ? '请输入有效数字，例如 972.5。'
+        : grossValue < 0
+          ? '整盘总重不能为负数。'
+          : grossValue > 20000
+            ? '整盘总重不能超过 20000 g。'
+            : grossValue < tareTotal
+              ? `整盘总重不能小于空盘皮重与其他重量之和（${tareTotal} g）。`
+              : grossValue - tareTotal > 10000
+                ? '净重不能超过 10000 g。'
+                : '';
 
   const hasCloudCatalog = catalog.length > 0 || presets.length > 0;
   const cloudBrands =
@@ -237,18 +278,34 @@ export function SpoolEditorModal({
     ),
   ];
   const types = allTypes.filter((item) => !isTypeHidden(preferences, brand, item));
-  const visibleBrandTypes = preferences.hiddenBrands.includes(brand) ? [] : allTypes;
+  const visibleBrandTypes = preferences.hiddenBrands.includes(brand) ? [] : types;
+  const selectedBrandOption = availableBrands.includes(brand)
+    ? brand
+    : availableBrands[0] || brand;
+  const selectedTypeOption = visibleBrandTypes.includes(type)
+    ? type
+    : visibleBrandTypes[0] || type;
   const brandList = expandedBrands
-    ? allBrands
-    : includedSelected(commonBrandList, 2, brand, (a, b) => a === b);
+    ? availableBrands
+    : includedSelected(
+        commonBrandList,
+        2,
+        selectedBrandOption,
+        (a, b) => a === b,
+      );
   const typeList = expandedTypes
     ? includedSelected(
         visibleBrandTypes,
         visibleBrandTypes.length,
-        type,
+        selectedTypeOption,
         (a, b) => a === b,
       )
-    : includedSelected(types.slice(0, 2), 2, type, (a, b) => a === b);
+    : includedSelected(
+        visibleBrandTypes.slice(0, 2),
+        2,
+        selectedTypeOption,
+        (a, b) => a === b,
+      );
   const allColors = [
     ...colorsForType(preferences, brand, type),
     { name: colorName, hex: colorHex },
@@ -263,31 +320,96 @@ export function SpoolEditorModal({
   const availableColors = allColors.filter(
     (color) => !isColorHidden(preferences, brand, type, color),
   );
-  const visibleTypeColors = isTypeHidden(preferences, brand, type) ? [] : allColors;
-  const colorList = expandedColors
-    ? includedSelected(
-        visibleTypeColors,
-        visibleTypeColors.length,
-        { name: colorName, hex: colorHex },
-        (a, b) => a.hex.toUpperCase() === b.hex.toUpperCase(),
-      )
-    : includedSelected(
-        availableColors.slice(0, 6),
-        6,
-        { name: colorName, hex: colorHex },
-        (a, b) => a.hex.toUpperCase() === b.hex.toUpperCase(),
-      );
+  const visibleTypeColors = isTypeHidden(preferences, brand, type) ? [] : availableColors;
+  const selectedColorOption = visibleTypeColors.find(
+    (color) => color.hex.toUpperCase() === colorHex.toUpperCase(),
+  );
+  const colorList = selectedColorOption
+    ? expandedColors
+      ? includedSelected(
+          visibleTypeColors,
+          visibleTypeColors.length,
+          selectedColorOption,
+          (a, b) => a.hex.toUpperCase() === b.hex.toUpperCase(),
+        )
+      : includedSelected(
+          availableColors.slice(0, 6),
+          6,
+          selectedColorOption,
+          (a, b) => a.hex.toUpperCase() === b.hex.toUpperCase(),
+        )
+    : expandedColors
+      ? visibleTypeColors
+      : availableColors.slice(0, 6);
+  const colorTypeId = typeOptionId(brand, type);
+  const normalizedSelectedColor = colorHex.toUpperCase();
+  const colorSourceLabel =
+    brand === 'Bambu Lab' &&
+    bambuColors.some(
+      (color) => color.hex.toUpperCase() === normalizedSelectedColor,
+    )
+    ? '官方色卡'
+    : (preferences.customTypeColors[colorTypeId] || []).some(
+          (color) => color.hex.toUpperCase() === normalizedSelectedColor,
+        )
+      ? '型号自定义色'
+      : preferences.customColors.some(
+            (color) => color.hex.toUpperCase() === normalizedSelectedColor,
+          )
+        ? '通用自定义色'
+        : '自定义颜色';
 
   const rfid = spool?.createType !== 'manual';
   const canSave = useMemo(() => {
     if (!spool) return false;
     if (tab === 'weight') {
-      return Number.isFinite(grossValue) && grossValue >= tareTotal;
+      return !weightError;
     }
     return Boolean(name.trim() || brand.trim() || type.trim());
-  }, [brand, grossValue, name, spool, tab, tareTotal, type]);
+  }, [brand, name, spool, tab, type, weightError]);
+  const dirty = useMemo(() => {
+    const baseline = baselineRef.current;
+    if (!baseline || !dirtyTracking) return false;
+    const isDirty = (
+      name !== baseline.name ||
+      note !== baseline.note ||
+      brand !== baseline.brand ||
+      type !== baseline.type ||
+      colorName !== baseline.colorName ||
+      colorHex !== baseline.colorHex ||
+      tareId !== baseline.tareId ||
+      extraId !== baseline.extraId ||
+      gross !== baseline.gross
+    );
+    return isDirty;
+  }, [
+    brand,
+    colorHex,
+    colorName,
+    dirtyTracking,
+    extraId,
+    gross,
+    name,
+    note,
+    type,
+    tareId,
+  ]);
 
   if (!spool) return null;
+
+  const requestClose = async () => {
+    if (dirty) {
+      const confirmed = await confirmAction({
+        title: '放弃未保存的修改？',
+        message: '当前料盘的名称、备注、重量或选项修改尚未保存。',
+        confirmLabel: '放弃修改',
+        cancelLabel: '继续编辑',
+        destructive: true,
+      });
+      if (!confirmed) return;
+    }
+    onClose();
+  };
 
   const changeTab = (next: Tab) => {
     if (next === 'weight' && spool) {
@@ -360,6 +482,10 @@ export function SpoolEditorModal({
   };
 
   const saveWeight = async () => {
+    if (!canSave) {
+      setError(weightError);
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -391,7 +517,7 @@ export function SpoolEditorModal({
   return (
     <Modal
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={requestClose}
       transparent
       visible={visible}
     >
@@ -399,7 +525,7 @@ export function SpoolEditorModal({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.overlay}
       >
-        <Pressable onPress={onClose} style={styles.backdrop} />
+        <Pressable onPress={requestClose} style={styles.backdrop} />
         <View style={[styles.dialog, desktop ? styles.dialogDesktop : styles.dialogMobile]}>
           <View style={styles.header}>
             <View style={styles.identity}>
@@ -426,7 +552,7 @@ export function SpoolEditorModal({
               </View>
               <Pressable
                 accessibilityLabel="关闭"
-                onPress={onClose}
+                onPress={requestClose}
                 style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
               >
                 <X color={colors.ink} size={19} strokeWidth={1.7} />
@@ -548,7 +674,7 @@ export function SpoolEditorModal({
                             }}
                           />
                         ))}
-                        {!expandedBrands && brandList.length < allBrands.length ? (
+                        {!expandedBrands && brandList.length < availableBrands.length ? (
                           <MoreButton onPress={() => setExpandedBrands(true)} />
                         ) : null}
                       </SelectMenu>
@@ -606,7 +732,7 @@ export function SpoolEditorModal({
                 >
                   <SelectTrigger
                     label="颜色"
-                    meta={brand === 'Bambu Lab' ? '官方色卡' : '通用色与自定义'}
+                    meta={colorSourceLabel}
                     open={dropdown === 'color'}
                     value={colorName}
                     trailing={
@@ -693,9 +819,9 @@ export function SpoolEditorModal({
                     style={[styles.input, styles.weightInput]}
                     value={gross}
                   />
-                  {grossBelowTare ? (
-                    <Text style={styles.error}>
-                      整盘总重不能小于空盘皮重与其他重量之和（{tareTotal} g）。
+                  {weightError ? (
+                    <Text accessibilityLiveRegion="polite" style={styles.error}>
+                      {weightError}
                     </Text>
                   ) : null}
                 </Field>

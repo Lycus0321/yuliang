@@ -193,6 +193,7 @@ export function LibraryView({
               <View style={styles.search}>
                 <Search color={colors.muted} size={17} strokeWidth={1.7} />
                 <TextInput
+                  accessibilityLabel="搜索耗材"
                   onChangeText={(query) => updateState({ query })}
                   placeholder="搜索品牌、类型或颜色"
                   placeholderTextColor={colors.muted}
@@ -227,6 +228,7 @@ export function LibraryView({
           <View style={[styles.search, styles.searchMobile]}>
             <Search color={colors.muted} size={17} strokeWidth={1.7} />
             <TextInput
+              accessibilityLabel="搜索耗材"
               onChangeText={(query) => updateState({ query })}
               placeholder="搜索品牌、类型或颜色"
               placeholderTextColor={colors.muted}
@@ -259,7 +261,7 @@ export function LibraryView({
             </Text>
           </View>
           <View style={[styles.overviewStats, compact && styles.overviewStatsCompact]}>
-            <Stat value={loadedCount} label="已装入 AMS" />
+            <Stat value={loadedCount} label="已装入设备" />
             <Stat value={lowCount} label="低余量" />
             <Stat value={materials} label="材料类型" />
           </View>
@@ -304,6 +306,7 @@ export function LibraryView({
             <View style={styles.viewToggle}>
               <Pressable
                 accessibilityLabel="卡片视图"
+                accessibilityState={{ selected: viewMode === 'grid' }}
                 onPress={() => updateState({ viewMode: 'grid' })}
                 style={[
                   styles.viewButton,
@@ -318,6 +321,7 @@ export function LibraryView({
               </Pressable>
               <Pressable
                 accessibilityLabel="列表视图"
+                accessibilityState={{ selected: viewMode === 'list' }}
                 onPress={() => updateState({ viewMode: 'list' })}
                 style={[
                   styles.viewButton,
@@ -494,6 +498,8 @@ function FilterChip({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,

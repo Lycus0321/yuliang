@@ -89,7 +89,7 @@ try {
       '类型 · 自定义选项\n测试型号改',
     ),
   );
-  await page.getByText('颜色 · 通用色与自定义').click();
+  await page.getByText(/颜色 ·/).first().click();
   await page.getByText('加载更多', { exact: true }).click();
   await page.getByText('测试颜色', { exact: true }).click();
   await page.getByText('重量', { exact: true }).click();

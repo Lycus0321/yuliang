@@ -36,6 +36,7 @@ import {
 import { colors, radii, shadow, type } from '../theme';
 import type { CatalogEntry } from '../types';
 import { ColorPicker } from './ColorPicker';
+import { confirmAction } from '../confirm';
 
 type Props = {
   preferences: AppPreferences;
@@ -106,6 +107,7 @@ export function CatalogManagerView({
   const [editorName, setEditorName] = useState('');
   const [colorHex, setColorHex] = useState('#000000');
   const [editorError, setEditorError] = useState('');
+  const [editorDirty, setEditorDirty] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<DeleteTarget | null>(null);
 
   const officialTypes = useMemo(
@@ -182,6 +184,7 @@ export function CatalogManagerView({
     setEditor(next);
     setEditorName(name);
     setColorHex(hex);
+    setEditorDirty(false);
     setEditorError('');
   };
 
@@ -554,6 +557,21 @@ export function CatalogManagerView({
     }
     onChange(next);
     setPendingDelete(null);
+  };
+
+  const requestCloseEditor = async () => {
+    if (editorDirty) {
+      const confirmed = await confirmAction({
+        title: '放弃未保存的目录编辑？',
+        message: '当前品牌、型号或颜色表单内容尚未保存。',
+        confirmLabel: '放弃修改',
+        cancelLabel: '继续编辑',
+        destructive: true,
+      });
+      if (!confirmed) return;
+    }
+    setEditor(null);
+    setEditorDirty(false);
   };
 
   return (
@@ -989,9 +1007,15 @@ export function CatalogManagerView({
         colorHex={colorHex}
         error={editorError}
         name={editorName}
-        onColorChange={setColorHex}
-        onClose={() => setEditor(null)}
-        onNameChange={setEditorName}
+        onColorChange={(value) => {
+          setColorHex(value);
+          setEditorDirty(true);
+        }}
+        onClose={requestCloseEditor}
+        onNameChange={(value) => {
+          setEditorName(value);
+          setEditorDirty(true);
+        }}
         onSave={saveEditor}
       />
     </View>
@@ -1459,9 +1483,10 @@ const styles = StyleSheet.create({
   },
   smallIcon: {
     alignItems: 'center',
-    height: 40,
+    borderRadius: 8,
+    height: 44,
     justifyContent: 'center',
-    width: 40,
+    width: 44,
   },
   detailHeading: {
     alignItems: 'center',
