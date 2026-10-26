@@ -69,10 +69,23 @@ console.log(
 await mobile.getByText('曜石黑').first().click();
 await mobile.waitForTimeout(300);
 await mobile.screenshot({ path: 'artifacts-app-modal-mobile.png' });
+const mobileModalSave = mobile.getByText('保存信息', { exact: true });
+const mobileModalSaveBox = await mobileModalSave.boundingBox();
+if (
+  !(await mobile.getByText('名称', { exact: true }).isVisible()) ||
+  !(await mobileModalSave.isVisible()) ||
+  !mobileModalSaveBox ||
+  mobileModalSaveBox.y + mobileModalSaveBox.height > 844
+) {
+  throw new Error('移动端料盘弹窗正文或底部保存栏不可见');
+}
 await mobile.getByText('重量', { exact: true }).click();
 await mobile.waitForTimeout(250);
 await mobile.screenshot({ path: 'artifacts-app-weight-mobile.png' });
 await mobile.getByLabel('关闭').click();
+if (!(await mobile.getByLabel('耗材库', { exact: true }).isVisible())) {
+  throw new Error('移动端底部导航不可见');
+}
 await mobile.getByText('偏好设置', { exact: true }).first().click();
 await mobile.waitForTimeout(300);
 await mobile.screenshot({ path: 'artifacts-app-settings-mobile.png' });

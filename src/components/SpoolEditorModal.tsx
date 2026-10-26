@@ -1236,10 +1236,13 @@ const styles = StyleSheet.create({
   dialogMobile: {
     alignSelf: 'center',
     borderRadius: 18,
-    maxHeight: '78%',
+    height: '78%',
+    maxHeight: 720,
+    maxWidth: 760,
     width: '92%',
   },
   header: {
+    flexShrink: 0,
     paddingHorizontal: 22,
     paddingTop: 20,
   },
@@ -1313,6 +1316,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(29,29,31,0.055)',
     borderRadius: radii.control,
     flexDirection: 'row',
+    flexShrink: 0,
     gap: 3,
     marginHorizontal: 22,
     marginTop: 16,
@@ -1346,7 +1350,9 @@ const styles = StyleSheet.create({
     paddingTop: 18,
   },
   bodyScroll: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
   },
   formGrid: {
     gap: 15,
@@ -1742,6 +1748,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.line,
     borderTopWidth: 1,
     flexDirection: 'row',
+    flexShrink: 0,
     justifyContent: 'space-between',
     gap: 14,
     paddingHorizontal: 22,

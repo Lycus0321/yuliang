@@ -27,6 +27,6 @@ const styles = StyleSheet.create({
   },
   tint: {
     backgroundColor: 'rgba(255,255,255,0.52)',
-    flex: 1,
+    width: '100%',
   },
 });

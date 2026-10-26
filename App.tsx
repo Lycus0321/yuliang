@@ -529,6 +529,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mobileNavArea: {
+    flexShrink: 0,
     paddingHorizontal: 12,
   },
   boot: {
