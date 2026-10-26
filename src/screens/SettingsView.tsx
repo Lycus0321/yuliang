@@ -725,7 +725,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 4,
-    height: 52,
+    height: 56,
     padding: 6,
   },
   navScroll: {
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.medium,
     borderWidth: 1,
     flexGrow: 0,
-    height: 52,
+    height: 56,
     width: '100%',
   },
   navItem: {
@@ -742,8 +742,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     flexDirection: 'row',
     gap: 8,
-    height: 40,
-    minHeight: 40,
+    height: 44,
+    minHeight: 44,
     paddingHorizontal: 10,
   },
   navItemActive: {
@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.control,
     flexDirection: 'row',
     gap: 6,
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 12,
   },
   primaryButtonText: {
@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 6,
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 11,
   },
   secondaryButtonText: {

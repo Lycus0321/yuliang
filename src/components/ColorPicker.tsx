@@ -206,45 +206,50 @@ export function ColorPicker({ value, onChange }: Props) {
         onLayout={(event) => {
           hueWidth.current = event.nativeEvent.layout.width;
         }}
-        style={styles.hueTrack}
+        style={styles.hueTouch}
       >
-        <LinearGradient
-          colors={[
-            '#FF0000',
-            '#FFFF00',
-            '#00FF00',
-            '#00FFFF',
-            '#0000FF',
-            '#FF00FF',
-            '#FF0000',
-          ]}
-          end={{ x: 1, y: 0 }}
-          pointerEvents="none"
-          start={{ x: 0, y: 0 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <View
-          pointerEvents="none"
-          style={[
-            styles.hueThumb,
-            {
-              backgroundColor: hsvToHex({ h: hsv.h, s: 1, v: 1 }),
-              left: hueLeft,
-            },
-          ]}
-        />
+        <View style={styles.hueTrack}>
+          <LinearGradient
+            colors={[
+              '#FF0000',
+              '#FFFF00',
+              '#00FF00',
+              '#00FFFF',
+              '#0000FF',
+              '#FF00FF',
+              '#FF0000',
+            ]}
+            end={{ x: 1, y: 0 }}
+            pointerEvents="none"
+            start={{ x: 0, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View
+            pointerEvents="none"
+            style={[
+              styles.hueThumb,
+              {
+                backgroundColor: hsvToHex({ h: hsv.h, s: 1, v: 1 }),
+                left: hueLeft,
+              },
+            ]}
+          />
+        </View>
       </View>
 
       <View style={styles.hexRow}>
         <Text style={styles.hexLabel}>HEX 色值（可选）</Text>
         <TextInput
+          accessibilityLabel="HEX 色值"
           autoCapitalize="characters"
           autoCorrect={false}
           maxLength={7}
           onChangeText={changeHex}
           placeholder="#RRGGBB"
           placeholderTextColor={colors.muted}
+          selectionColor={colors.primary}
           style={styles.input}
+          underlineColorAndroid="transparent"
           value={value}
         />
       </View>
@@ -257,7 +262,9 @@ export function ColorPicker({ value, onChange }: Props) {
             return (
               <Pressable
                 accessibilityLabel={`选择颜色 ${hex}`}
+                accessibilityRole="button"
                 accessibilityState={{ selected }}
+                hitSlop={6}
                 key={hex}
                 onPress={() => selectPreset(hex)}
                 style={({ pressed }) => [
@@ -413,8 +420,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     height: 22,
-    marginHorizontal: 2,
     position: 'relative',
+  },
+  hueTouch: {
+    height: 44,
+    justifyContent: 'center',
+    marginHorizontal: 2,
   },
   hueThumb: {
     borderColor: colors.white,
@@ -446,7 +457,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
-    minHeight: 40,
+    minHeight: 44,
     outlineWidth: 0,
     paddingHorizontal: 11,
   },

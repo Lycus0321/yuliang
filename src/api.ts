@@ -22,6 +22,25 @@ const WEB_HOSTS: Record<Region, string> = {
 };
 
 const directMode = Platform.OS !== 'web';
+const REQUEST_TIMEOUT_MS = 20000;
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new BambuApiError('连接超时，请检查网络后重试。');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 function workerApiBase() {
   if (typeof window !== 'undefined' && window.location.port === '8081') {
@@ -53,7 +72,7 @@ async function workerRequest(
 ): Promise<Record<string, unknown>> {
   let response: Response;
   try {
-    response = await fetch(`${workerApiBase()}${path}`, {
+    response = await fetchWithTimeout(`${workerApiBase()}${path}`, {
       method: options.method ?? 'GET',
       credentials: 'include',
       headers: {
@@ -62,7 +81,8 @@ async function workerRequest(
       },
       body: options.body ? JSON.stringify(options.body) : undefined,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof BambuApiError) throw error;
     throw new BambuApiError('无法连接服务，请检查网络后重试。');
   }
 
@@ -95,11 +115,12 @@ async function directRequest(
 
   let response: Response;
   try {
-    response = await fetch(`https://${API_HOSTS[region]}${path}`, {
+    response = await fetchWithTimeout(`https://${API_HOSTS[region]}${path}`, {
       ...init,
       headers,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof BambuApiError) throw error;
     throw new BambuApiError('无法连接拓竹服务，请检查网络后重试。');
   }
 
@@ -224,7 +245,7 @@ async function directLoginWithTfa(
 
   let csrfResponse: Response;
   try {
-    csrfResponse = await fetch(`${WEB_HOSTS[region]}/api/csrf`, {
+    csrfResponse = await fetchWithTimeout(`${WEB_HOSTS[region]}/api/csrf`, {
       headers: { Accept: 'application/json' },
     });
   } catch {
@@ -235,7 +256,7 @@ async function directLoginWithTfa(
 
   let response: Response;
   try {
-    response = await fetch(`${WEB_HOSTS[region]}/api/sign-in/tfa`, {
+    response = await fetchWithTimeout(`${WEB_HOSTS[region]}/api/sign-in/tfa`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',

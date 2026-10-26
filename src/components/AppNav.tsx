@@ -90,6 +90,7 @@ export function AppNav({ view, desktop, session, onChangeView, onLogout }: Props
             </View>
             <Pressable
               accessibilityLabel="退出账号"
+              hitSlop={5}
               onPress={onLogout}
               style={({ pressed }) => [styles.logout, pressed && styles.pressed]}
             >

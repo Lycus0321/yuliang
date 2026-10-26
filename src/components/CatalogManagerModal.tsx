@@ -10,7 +10,9 @@ import {
 } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -1069,7 +1071,10 @@ function CatalogEditorModal({
         : '颜色';
   return (
     <Modal animationType="fade" onRequestClose={onClose} transparent visible>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.overlay}
+      >
         <Pressable onPress={onClose} style={styles.backdrop} />
         <View style={[styles.dialog, styles.formDialog]}>
           <View style={styles.formHeader}>
@@ -1083,12 +1088,24 @@ function CatalogEditorModal({
                   : `填写${label}名称后保存`}
               </Text>
             </View>
-            <Pressable accessibilityLabel="关闭表单" onPress={onClose} style={styles.close}>
+            <Pressable
+              accessibilityLabel="关闭表单"
+              hitSlop={4}
+              onPress={onClose}
+              style={styles.close}
+            >
               <X color={colors.ink} size={19} />
             </Pressable>
           </View>
-          <View style={styles.editorBody}>
+          <ScrollView
+            contentContainerStyle={styles.editorBody}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            style={styles.editorScroll}
+          >
             <TextInput
+              accessibilityLabel={`${label}名称`}
               autoFocus
               onChangeText={onNameChange}
               placeholder={
@@ -1099,13 +1116,19 @@ function CatalogEditorModal({
                     : '颜色名称'
               }
               placeholderTextColor={colors.muted}
+              selectionColor={colors.primary}
               style={styles.input}
+              underlineColorAndroid="transparent"
               value={name}
             />
             {editor.kind === 'color' ? (
               <ColorPicker onChange={onColorChange} value={colorHex} />
             ) : null}
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? (
+              <Text accessibilityLiveRegion="polite" style={styles.error}>
+                {error}
+              </Text>
+            ) : null}
             <View style={styles.formActions}>
               <Pressable
                 accessibilityLabel={`保存${label}`}
@@ -1119,9 +1142,9 @@ function CatalogEditorModal({
                 <Text style={styles.cancelText}>取消</Text>
               </Pressable>
             </View>
-          </View>
+          </ScrollView>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -1284,6 +1307,7 @@ const styles = StyleSheet.create({
     maxWidth: 1040,
   },
   formDialog: {
+    maxHeight: '88%',
     maxWidth: 620,
     paddingBottom: 18,
   },
@@ -1301,7 +1325,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 5,
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 10,
   },
   backText: {
@@ -1335,9 +1359,9 @@ const styles = StyleSheet.create({
   },
   close: {
     alignItems: 'center',
-    height: 40,
+    height: 44,
     justifyContent: 'center',
-    width: 40,
+    width: 44,
   },
   body: {
     flex: 1,
@@ -1355,6 +1379,10 @@ const styles = StyleSheet.create({
   editorBody: {
     gap: 12,
     padding: 18,
+  },
+  editorScroll: {
+    flexShrink: 1,
+    minHeight: 0,
   },
   columns: {
     alignItems: 'flex-start',
@@ -1412,7 +1440,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    minHeight: 36,
+    minHeight: 44,
     minWidth: 0,
     outlineWidth: 0,
     paddingHorizontal: 9,
@@ -1424,7 +1452,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 4,
     justifyContent: 'center',
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 10,
   },
   addNodeText: {
@@ -1437,7 +1465,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 5,
     marginBottom: 10,
-    minHeight: 32,
+    minHeight: 44,
   },
   nodeList: {
     gap: 6,
@@ -1584,7 +1612,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 5,
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 10,
   },
   secondaryText: {
@@ -1626,7 +1654,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
-    minHeight: 42,
+    minHeight: 44,
     outlineWidth: 0,
     paddingHorizontal: 11,
   },
@@ -1640,7 +1668,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.medium,
     flexDirection: 'row',
     gap: 5,
-    minHeight: 38,
+    minHeight: 44,
     paddingHorizontal: 12,
   },
   primaryText: {
@@ -1655,7 +1683,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.medium,
     borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 38,
+    minHeight: 44,
     paddingHorizontal: 12,
   },
   cancelText: {

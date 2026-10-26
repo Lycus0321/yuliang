@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login, loginWithCode, loginWithTfa } from '../api';
 import { colors, radii, type } from '../theme';
 import type { Region, Session } from '../types';
@@ -22,6 +23,7 @@ type Props = {
 
 export function LoginScreen({ onAuthenticated }: Props) {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const desktop = width >= 900;
   const [region, setRegion] = useState<Region>('china');
   const [email, setEmail] = useState('');
@@ -103,7 +105,17 @@ export function LoginScreen({ onAuthenticated }: Props) {
       style={styles.page}
     >
       <ScrollView
-        contentContainerStyle={[styles.scroll, desktop && styles.scrollDesktop]}
+        contentContainerStyle={[
+          styles.scroll,
+          desktop && styles.scrollDesktop,
+          Platform.OS === 'web'
+            ? undefined
+            : {
+                paddingBottom: Math.max(30, insets.bottom + 20),
+                paddingTop: Math.max(24, insets.top + 18),
+              },
+        ]}
+        keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -137,6 +149,7 @@ export function LoginScreen({ onAuthenticated }: Props) {
               accessibilityLabel="中国大陆区"
               accessibilityRole="button"
               accessibilityState={{ selected: region === 'china' }}
+              hitSlop={2}
               onPress={() => setRegion('china')}
               style={[styles.regionItem, region === 'china' && styles.regionActive]}
             >
@@ -153,6 +166,7 @@ export function LoginScreen({ onAuthenticated }: Props) {
               accessibilityLabel="国际区"
               accessibilityRole="button"
               accessibilityState={{ selected: region === 'global' }}
+              hitSlop={2}
               onPress={() => setRegion('global')}
               style={[styles.regionItem, region === 'global' && styles.regionActive]}
             >
@@ -179,7 +193,9 @@ export function LoginScreen({ onAuthenticated }: Props) {
               onChangeText={setEmail}
               placeholder="邮箱或手机号"
               placeholderTextColor="#969E98"
+              selectionColor={colors.primary}
               style={styles.input}
+              underlineColorAndroid="transparent"
               value={email}
             />
           </View>
@@ -195,8 +211,10 @@ export function LoginScreen({ onAuthenticated }: Props) {
                 onSubmitEditing={handleLogin}
                 placeholder="输入 Bambu 密码"
                 placeholderTextColor="#969E98"
+                selectionColor={colors.primary}
                 secureTextEntry
                 style={styles.input}
+                underlineColorAndroid="transparent"
                 value={password}
               />
             </View>
@@ -206,11 +224,17 @@ export function LoginScreen({ onAuthenticated }: Props) {
                 <Text style={styles.label}>
                   {stage === 'tfa' ? '双重验证码' : '验证码'}
                 </Text>
-                <Pressable onPress={() => setStage('credentials')}>
+                <Pressable
+                  accessibilityLabel="返回账号登录"
+                  accessibilityRole="button"
+                  hitSlop={8}
+                  onPress={() => setStage('credentials')}
+                >
                   <Text style={styles.changeAccount}>返回账号</Text>
                 </Pressable>
               </View>
               <TextInput
+                accessibilityLabel="登录验证码"
                 autoFocus
                 keyboardType="number-pad"
                 onChangeText={setCode}
@@ -219,7 +243,9 @@ export function LoginScreen({ onAuthenticated }: Props) {
                   stage === 'tfa' ? '输入验证器或邮箱验证码' : '输入邮箱或短信验证码'
                 }
                 placeholderTextColor="#969E98"
+                selectionColor={colors.primary}
                 style={styles.input}
+                underlineColorAndroid="transparent"
                 value={code}
               />
             </View>
@@ -366,9 +392,9 @@ const styles = StyleSheet.create({
   },
   directText: {
     color: colors.primary,
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '700',
-    lineHeight: 14,
+    lineHeight: 18,
   },
   intro: {
     marginTop: 46,
@@ -405,6 +431,8 @@ const styles = StyleSheet.create({
   },
   regionItem: {
     borderRadius: radii.small,
+    justifyContent: 'center',
+    minHeight: 40,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
@@ -413,9 +441,9 @@ const styles = StyleSheet.create({
   },
   regionText: {
     color: colors.muted,
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '600',
-    lineHeight: 15,
+    lineHeight: 18,
   },
   regionTextActive: {
     color: colors.ink,
@@ -433,9 +461,9 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.muted,
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '700',
-    lineHeight: 14,
+    lineHeight: 18,
   },
   input: {
     color: colors.ink,
@@ -454,19 +482,19 @@ const styles = StyleSheet.create({
   },
   changeAccount: {
     color: colors.primary,
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '700',
-    lineHeight: 14,
+    lineHeight: 18,
   },
   message: {
     color: colors.primary,
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 18,
     paddingHorizontal: 2,
   },
   error: {
     color: colors.danger,
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 18,
     paddingHorizontal: 2,
   },
@@ -497,7 +525,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     gap: 7,
-    minHeight: 42,
+    minHeight: 44,
     paddingHorizontal: 12,
   },
   demoPressed: {
@@ -505,9 +533,9 @@ const styles = StyleSheet.create({
   },
   demoText: {
     color: colors.primary,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    lineHeight: 17,
+    lineHeight: 18,
   },
   securityNote: {
     alignItems: 'flex-start',
@@ -518,8 +546,8 @@ const styles = StyleSheet.create({
   securityText: {
     color: colors.muted,
     flex: 1,
-    fontSize: 10,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
   },
   apiNote: {
     alignItems: 'flex-start',
@@ -530,7 +558,7 @@ const styles = StyleSheet.create({
   apiText: {
     color: colors.muted,
     flex: 1,
-    fontSize: 10,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

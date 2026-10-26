@@ -197,7 +197,10 @@ export function LibraryView({
                   onChangeText={(query) => updateState({ query })}
                   placeholder="搜索品牌、类型或颜色"
                   placeholderTextColor={colors.muted}
+                  returnKeyType="search"
+                  selectionColor={colors.primary}
                   style={styles.searchInput}
+                  underlineColorAndroid="transparent"
                   value={query}
                 />
               </View>
@@ -232,7 +235,10 @@ export function LibraryView({
               onChangeText={(query) => updateState({ query })}
               placeholder="搜索品牌、类型或颜色"
               placeholderTextColor={colors.muted}
+              returnKeyType="search"
+              selectionColor={colors.primary}
               style={styles.searchInput}
+              underlineColorAndroid="transparent"
               value={query}
             />
           </View>
@@ -306,7 +312,9 @@ export function LibraryView({
             <View style={styles.viewToggle}>
               <Pressable
                 accessibilityLabel="卡片视图"
+                accessibilityRole="button"
                 accessibilityState={{ selected: viewMode === 'grid' }}
+                hitSlop={4}
                 onPress={() => updateState({ viewMode: 'grid' })}
                 style={[
                   styles.viewButton,
@@ -321,7 +329,9 @@ export function LibraryView({
               </Pressable>
               <Pressable
                 accessibilityLabel="列表视图"
+                accessibilityRole="button"
                 accessibilityState={{ selected: viewMode === 'list' }}
+                hitSlop={4}
                 onPress={() => updateState({ viewMode: 'list' })}
                 style={[
                   styles.viewButton,
@@ -402,6 +412,7 @@ export function LibraryView({
                     : '调整搜索或筛选条件'}
                 </Text>
                 <Pressable
+                  accessibilityRole="button"
                   onPress={() => {
                     updateState({
                       query: '',
@@ -500,6 +511,7 @@ function FilterChip({
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
+      hitSlop={4}
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
@@ -582,9 +594,9 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     borderRadius: radii.control,
     borderWidth: 1,
-    height: 40,
+    height: 44,
     justifyContent: 'center',
-    width: 40,
+    width: 44,
   },
   syncButton: {
     alignItems: 'center',
@@ -592,7 +604,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.control,
     flexDirection: 'row',
     gap: 7,
-    height: 40,
+    height: 44,
     paddingHorizontal: 15,
   },
   syncButtonPressed: {
@@ -720,6 +732,8 @@ const styles = StyleSheet.create({
   chip: {
     backgroundColor: 'rgba(29,29,31,0.055)',
     borderRadius: 999,
+    justifyContent: 'center',
+    minHeight: 36,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
@@ -765,7 +779,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 7,
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 11,
   },
   sortText: {
@@ -786,9 +800,9 @@ const styles = StyleSheet.create({
   viewButton: {
     alignItems: 'center',
     borderRadius: 7,
-    height: 30,
+    height: 36,
     justifyContent: 'center',
-    width: 32,
+    width: 40,
   },
   viewButtonActive: {
     backgroundColor: colors.mint,
@@ -879,7 +893,9 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   clearButton: {
+    justifyContent: 'center',
     marginTop: 14,
+    minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },

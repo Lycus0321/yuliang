@@ -411,6 +411,14 @@ export function SpoolEditorModal({
     onClose();
   };
 
+  const handleRequestClose = () => {
+    if (dropdown) {
+      setDropdown(null);
+      return;
+    }
+    void requestClose();
+  };
+
   const changeTab = (next: Tab) => {
     if (next === 'weight' && spool) {
       const originalBrand = spool.filamentVendor || '';
@@ -517,7 +525,7 @@ export function SpoolEditorModal({
   return (
     <Modal
       animationType="fade"
-      onRequestClose={requestClose}
+      onRequestClose={handleRequestClose}
       transparent
       visible={visible}
     >
@@ -552,6 +560,7 @@ export function SpoolEditorModal({
               </View>
               <Pressable
                 accessibilityLabel="关闭"
+                hitSlop={6}
                 onPress={requestClose}
                 style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
               >
@@ -591,6 +600,7 @@ export function SpoolEditorModal({
 
           <ScrollView
             contentContainerStyle={styles.body}
+            keyboardDismissMode="on-drag"
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             style={styles.bodyScroll}
@@ -604,10 +614,13 @@ export function SpoolEditorModal({
               >
                 <Field label="名称">
                   <TextInput
+                    accessibilityLabel="耗材名称"
                     onChangeText={setName}
                     placeholder="例如 PLA Basic 黑色"
                     placeholderTextColor={colors.muted}
+                    selectionColor={colors.primary}
                     style={styles.input}
+                    underlineColorAndroid="transparent"
                     value={name}
                   />
                 </Field>
@@ -773,13 +786,16 @@ export function SpoolEditorModal({
 
                 <Field label="备注">
                   <TextInput
+                    accessibilityLabel="耗材备注"
                     maxLength={50}
                     multiline
                     onChangeText={setNote}
                     placeholder="添加这盘耗材的备注"
                     placeholderTextColor={colors.muted}
+                    selectionColor={colors.primary}
                     style={styles.noteInput}
                     textAlignVertical="top"
+                    underlineColorAndroid="transparent"
                     value={note}
                   />
                 </Field>
@@ -812,11 +828,14 @@ export function SpoolEditorModal({
 
                 <Field label="整盘总重">
                   <TextInput
+                    accessibilityLabel="整盘总重，单位克"
                     keyboardType="decimal-pad"
                     onChangeText={setGross}
                     placeholder="972"
                     placeholderTextColor={colors.muted}
+                    selectionColor={colors.primary}
                     style={[styles.input, styles.weightInput]}
+                    underlineColorAndroid="transparent"
                     value={gross}
                   />
                   {weightError ? (
@@ -1056,6 +1075,7 @@ function ExtraPresetSheet({
           </View>
           <Pressable
             accessibilityLabel="关闭"
+            hitSlop={6}
             onPress={onClose}
             style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
           >
@@ -1329,7 +1349,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 7,
     justifyContent: 'center',
-    minHeight: 38,
+    minHeight: 44,
   },
   tabActive: {
     backgroundColor: colors.white,
@@ -1478,7 +1498,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     flexDirection: 'row',
     gap: 8,
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: 9,
   },
   selectOptionActive: {
@@ -1513,7 +1533,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 6,
-    minHeight: 38,
+    minHeight: 44,
     paddingHorizontal: 8,
     width: '32%',
   },
@@ -1537,7 +1557,7 @@ const styles = StyleSheet.create({
   moreButton: {
     alignItems: 'center',
     borderRadius: 8,
-    minHeight: 34,
+    minHeight: 44,
     justifyContent: 'center',
   },
   moreText: {
@@ -1660,7 +1680,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     justifyContent: 'center',
-    minHeight: 42,
+    minHeight: 44,
     paddingHorizontal: 10,
   },
   lifecycleDeleteButton: {
@@ -1711,7 +1731,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.control,
     borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 38,
+    minHeight: 44,
     paddingHorizontal: 13,
   },
   cancelText: {
@@ -1724,7 +1744,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderRadius: radii.control,
     justifyContent: 'center',
-    minHeight: 38,
+    minHeight: 44,
     minWidth: 82,
     paddingHorizontal: 13,
   },
@@ -1767,7 +1787,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 7,
     justifyContent: 'center',
-    minHeight: 42,
+    minHeight: 44,
     minWidth: 118,
     paddingHorizontal: 16,
   },

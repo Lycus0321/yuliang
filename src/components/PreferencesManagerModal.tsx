@@ -10,7 +10,9 @@ import {
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -735,14 +737,22 @@ export function PreferencesManagerModal({
 
   return (
     <Modal animationType="fade" onRequestClose={requestClose} transparent visible>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.overlay}
+      >
         <Pressable onPress={requestClose} style={styles.backdrop} />
         <View style={styles.dialog}>
           <View style={styles.header}>
             <Text style={styles.title}>
               {mode === 'list' ? titles[kind] : formTitle}
             </Text>
-            <Pressable accessibilityLabel="关闭" onPress={requestClose} style={styles.close}>
+            <Pressable
+              accessibilityLabel="关闭"
+              hitSlop={6}
+              onPress={requestClose}
+              style={styles.close}
+            >
               <X color={colors.ink} size={19} />
             </Pressable>
           </View>
@@ -837,8 +847,10 @@ export function PreferencesManagerModal({
           ) : (
             <ScrollView
               contentContainerStyle={styles.formScroll}
+              keyboardDismissMode="on-drag"
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              style={styles.formScrollView}
             >
               {formError ? (
                 <Text style={styles.formError}>{formError}</Text>
@@ -846,13 +858,16 @@ export function PreferencesManagerModal({
               {kind === 'color' ? (
                 <View style={styles.colorEditor}>
                   <TextInput
+                    accessibilityLabel="颜色名称"
                     onChangeText={(next) => {
                       setName(next);
                       setFormDirty(true);
                     }}
                     placeholder="颜色名称"
                     placeholderTextColor={colors.muted}
+                    selectionColor={colors.primary}
                     style={styles.input}
+                    underlineColorAndroid="transparent"
                     value={name}
                   />
                   <ColorPicker
@@ -866,6 +881,7 @@ export function PreferencesManagerModal({
               ) : (
                 <View style={styles.formStack}>
                   <TextInput
+                    accessibilityLabel={kind === 'type' ? '型号名称' : '名称'}
                     onChangeText={(next) => {
                       setName(next);
                       setFormDirty(true);
@@ -876,11 +892,14 @@ export function PreferencesManagerModal({
                         : '名称'
                     }
                     placeholderTextColor={colors.muted}
+                    selectionColor={colors.primary}
                     style={styles.input}
+                    underlineColorAndroid="transparent"
                     value={name}
                   />
                   {isPreset ? (
                     <TextInput
+                      accessibilityLabel="克重"
                       keyboardType="numeric"
                       onChangeText={(next) => {
                         setValue(next);
@@ -888,7 +907,9 @@ export function PreferencesManagerModal({
                       }}
                       placeholder="克重"
                       placeholderTextColor={colors.muted}
+                      selectionColor={colors.primary}
                       style={styles.input}
+                      underlineColorAndroid="transparent"
                       value={value}
                     />
                   ) : null}
@@ -982,7 +1003,7 @@ export function PreferencesManagerModal({
             }}
           />
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -1018,7 +1039,12 @@ function PresetAssociationPicker({
         <View style={[styles.dialog, styles.pickerDialog]}>
           <View style={styles.pickerHeader}>
             <Text style={styles.title}>{title}</Text>
-            <Pressable accessibilityLabel="关闭选择" onPress={onClose} style={styles.close}>
+            <Pressable
+              accessibilityLabel="关闭选择"
+              hitSlop={6}
+              onPress={onClose}
+              style={styles.close}
+            >
               <X color={colors.ink} size={19} />
             </Pressable>
           </View>
@@ -1386,7 +1412,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     justifyContent: 'center',
-    minHeight: 42,
+    minHeight: 44,
     paddingHorizontal: 16,
   },
   deleteConfirm: {
@@ -1405,7 +1431,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.danger,
     borderRadius: radii.control,
     justifyContent: 'center',
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 14,
   },
   deleteButtonText: {
@@ -1416,6 +1442,10 @@ const styles = StyleSheet.create({
   formScroll: {
     paddingBottom: 4,
     paddingTop: 14,
+  },
+  formScrollView: {
+    flexShrink: 1,
+    minHeight: 0,
   },
   formStack: {
     gap: 10,
@@ -1461,7 +1491,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    minHeight: 40,
+    minHeight: 44,
     outlineWidth: 0,
     paddingHorizontal: 10,
   },
@@ -1472,7 +1502,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
-    minHeight: 40,
+    minHeight: 44,
     outlineWidth: 0,
     paddingHorizontal: 10,
     width: 90,
@@ -1483,7 +1513,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.control,
     flexDirection: 'row',
     gap: 4,
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 12,
   },
   cancelButton: {
@@ -1492,7 +1522,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.control,
     borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: 12,
   },
   cancelText: {

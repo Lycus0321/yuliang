@@ -9,6 +9,7 @@ import { Cloud } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   Platform,
   StyleSheet,
   Text,
@@ -61,7 +62,7 @@ import type {
 import { confirmAction } from './src/confirm';
 
 export default function App() {
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -70,7 +71,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      {fontsLoaded ? <AppContent /> : <BootScreen />}
+      {fontsLoaded || fontError ? <AppContent /> : <BootScreen />}
     </SafeAreaProvider>
   );
 }
@@ -95,6 +96,16 @@ function AppContent() {
   const [preferences, setPreferences] = useState<AppPreferences>(defaultPreferences);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
   const [presets, setPresets] = useState<CatalogEntry[]>([]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !session) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (selectedSpool || view === 'library') return false;
+      setView('library');
+      return true;
+    });
+    return () => subscription.remove();
+  }, [selectedSpool, session, view]);
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
