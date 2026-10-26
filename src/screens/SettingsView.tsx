@@ -126,18 +126,21 @@ export function SettingsView({
     <>
       <SettingsNavItem
         active={section === 'security'}
+        compact={compact}
         icon={<ShieldCheck color={section === 'security' ? colors.primary : colors.muted} size={17} />}
         label="账户与安全"
         onPress={() => setSection('security')}
       />
       <SettingsNavItem
         active={section === 'materials'}
+        compact={compact}
         icon={<Gauge color={section === 'materials' ? colors.primary : colors.muted} size={17} />}
         label="耗材与皮重"
         onPress={() => setSection('materials')}
       />
       <SettingsNavItem
         active={section === 'data'}
+        compact={compact}
         icon={<Database color={section === 'data' ? colors.primary : colors.muted} size={17} />}
         label="数据管理"
         onPress={() => setSection('data')}
@@ -150,7 +153,7 @@ export function SettingsView({
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <View style={styles.pageHead}>
-          <View>
+          <View style={styles.pageHeadCopy}>
             <Text style={styles.breadcrumb}>耗材管理</Text>
             <Text style={styles.title}>设置</Text>
             <Text style={styles.subtitle}>
@@ -161,14 +164,9 @@ export function SettingsView({
 
         <View style={[styles.layout, compact && styles.layoutCompact]}>
           {compact ? (
-            <ScrollView
-              contentContainerStyle={styles.navCompact}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.navScroll}
-            >
+            <View style={styles.navCompact}>
               {settingsNavigation}
-            </ScrollView>
+            </View>
           ) : (
             <View style={styles.nav}>{settingsNavigation}</View>
           )}
@@ -182,6 +180,7 @@ export function SettingsView({
                 />
                 <SettingsBlock title="拓竹账户">
                   <SettingRow
+                    stacked={compact}
                     copy={
                       <View style={styles.accountLine}>
                         <View style={styles.avatar}>
@@ -376,11 +375,13 @@ export function SettingsView({
 
 function SettingsNavItem({
   active,
+  compact,
   icon,
   label,
   onPress,
 }: {
   active: boolean;
+  compact: boolean;
   icon: React.ReactNode;
   label: string;
   onPress: () => void;
@@ -394,6 +395,7 @@ function SettingsNavItem({
       onPress={onPress}
       style={({ pressed }) => [
         styles.navItem,
+        compact && styles.navItemCompact,
         active && styles.navItemActive,
         hovered && !active && styles.navItemHover,
         pressed && styles.pressed,
@@ -452,14 +454,18 @@ function SettingsBlock({
 function SettingRow({
   copy,
   action,
+  stacked = false,
 }: {
   copy: React.ReactNode;
   action: React.ReactNode;
+  stacked?: boolean;
 }) {
   return (
-    <View style={styles.settingRow}>
+    <View style={[styles.settingRow, stacked && styles.settingRowStacked]}>
       <View style={styles.settingCopy}>{copy}</View>
-      <View style={styles.settingAction}>{action}</View>
+      <View style={[styles.settingAction, stacked && styles.settingActionStacked]}>
+        {action}
+      </View>
     </View>
   );
 }
@@ -687,6 +693,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 76,
   },
+  pageHeadCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
   breadcrumb: {
     color: colors.muted,
     fontFamily: 'Inter_400Regular',
@@ -723,18 +733,13 @@ const styles = StyleSheet.create({
   },
   navCompact: {
     alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-    height: 56,
-    padding: 6,
-  },
-  navScroll: {
     backgroundColor: colors.surface,
     borderColor: colors.line,
     borderRadius: radii.medium,
     borderWidth: 1,
-    flexGrow: 0,
-    height: 56,
+    flexDirection: 'row',
+    gap: 4,
+    padding: 6,
     width: '100%',
   },
   navItem: {
@@ -745,6 +750,15 @@ const styles = StyleSheet.create({
     height: 44,
     minHeight: 44,
     paddingHorizontal: 10,
+  },
+  navItemCompact: {
+    flex: 1,
+    flexDirection: 'column',
+    gap: 3,
+    height: 58,
+    justifyContent: 'center',
+    minWidth: 0,
+    paddingHorizontal: 4,
   },
   navItemActive: {
     backgroundColor: colors.mint,
@@ -844,12 +858,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
   },
+  settingRowStacked: {
+    alignItems: 'stretch',
+    flexDirection: 'column',
+    gap: 10,
+  },
   settingCopy: {
     flex: 1,
     minWidth: 0,
   },
   settingAction: {
     flexShrink: 0,
+  },
+  settingActionStacked: {
+    alignItems: 'flex-start',
+    width: '100%',
   },
   settingTitle: {
     color: colors.ink,

@@ -1129,20 +1129,20 @@ function CatalogEditorModal({
                 {error}
               </Text>
             ) : null}
-            <View style={styles.formActions}>
-              <Pressable
-                accessibilityLabel={`保存${label}`}
-                onPress={onSave}
-                style={styles.primaryButton}
-              >
-                <Check color={colors.white} size={17} />
-                <Text style={styles.primaryText}>保存</Text>
-              </Pressable>
-              <Pressable onPress={onClose} style={styles.cancelButton}>
-                <Text style={styles.cancelText}>取消</Text>
-              </Pressable>
-            </View>
           </ScrollView>
+          <View style={styles.formFooter}>
+            <Pressable
+              accessibilityLabel={`保存${label}`}
+              onPress={onSave}
+              style={styles.primaryButton}
+            >
+              <Check color={colors.white} size={17} />
+              <Text style={styles.primaryText}>保存</Text>
+            </Pressable>
+            <Pressable onPress={onClose} style={styles.cancelButton}>
+              <Text style={styles.cancelText}>取消</Text>
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -1309,7 +1309,6 @@ const styles = StyleSheet.create({
   formDialog: {
     maxHeight: '88%',
     maxWidth: 620,
-    paddingBottom: 18,
   },
   header: {
     alignItems: 'flex-start',
@@ -1383,6 +1382,14 @@ const styles = StyleSheet.create({
   editorScroll: {
     flexShrink: 1,
     minHeight: 0,
+  },
+  formFooter: {
+    borderTopColor: colors.line,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    gap: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
   },
   columns: {
     alignItems: 'flex-start',
@@ -1657,10 +1664,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     outlineWidth: 0,
     paddingHorizontal: 11,
-  },
-  formActions: {
-    flexDirection: 'row',
-    gap: 7,
   },
   primaryButton: {
     alignItems: 'center',

@@ -267,14 +267,14 @@ export function LibraryView({
             </Text>
           </View>
           <View style={[styles.overviewStats, compact && styles.overviewStatsCompact]}>
-            <Stat value={loadedCount} label="已装入设备" />
-            <Stat value={lowCount} label="低余量" />
-            <Stat value={materials} label="材料类型" />
+            <Stat compact={compact} value={loadedCount} label="已装入设备" />
+            <Stat compact={compact} value={lowCount} label="低余量" />
+            <Stat compact={compact} value={materials} label="材料类型" />
           </View>
         </View>
 
-        <View style={styles.toolbar}>
-          <View style={styles.filters}>
+        <View style={[styles.toolbar, compact && styles.toolbarCompact]}>
+          <View style={[styles.filters, compact && styles.filtersCompact]}>
             <FilterChip
               count={activeSpools.length}
               label="全部"
@@ -300,7 +300,7 @@ export function LibraryView({
               onPress={() => updateState({ filter: 'depleted' })}
             />
           </View>
-          <View style={styles.toolControls}>
+          <View style={[styles.toolControls, compact && styles.toolControlsCompact]}>
             <Pressable
               accessibilityLabel={`排序方式：${sortLabel}`}
               onPress={() => setSortOpen(true)}
@@ -442,9 +442,17 @@ export function LibraryView({
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({
+  compact,
+  value,
+  label,
+}: {
+  compact: boolean;
+  value: number;
+  label: string;
+}) {
   return (
-    <View style={styles.stat}>
+    <View style={[styles.stat, compact && styles.statCompact]}>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -694,6 +702,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   overviewStatsCompact: {
+    gap: 6,
     width: '100%',
   },
   stat: {
@@ -703,6 +712,11 @@ const styles = StyleSheet.create({
     minWidth: 92,
     paddingHorizontal: 13,
     paddingVertical: 10,
+  },
+  statCompact: {
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 8,
   },
   statValue: {
     color: colors.ink,
@@ -724,10 +738,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 16,
   },
+  toolbarCompact: {
+    alignItems: 'stretch',
+  },
   filters: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 7,
+  },
+  filtersCompact: {
+    width: '100%',
   },
   chip: {
     backgroundColor: 'rgba(29,29,31,0.055)',
@@ -770,6 +790,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
+  },
+  toolControlsCompact: {
+    justifyContent: 'space-between',
+    width: '100%',
   },
   sortButton: {
     alignItems: 'center',

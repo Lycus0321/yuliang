@@ -51,11 +51,23 @@ try {
   });
 
   const mobile = await context.newPage();
-  await mobile.setViewportSize({ width: 390, height: 844 });
+  await mobile.setViewportSize({ width: 320, height: 640 });
   await mobile.goto(appUrl);
   await mobile.waitForTimeout(600);
+  const statRights = await Promise.all(
+    ['已装入设备', '低余量', '材料类型'].map(async (label) => {
+      const box = await mobile.getByText(label, { exact: true }).first().boundingBox();
+      return box ? box.x + box.width : Number.POSITIVE_INFINITY;
+    }),
+  );
+  assert(statRights.every((right) => right <= 320));
   await mobile.getByText('偏好设置', { exact: true }).first().click();
   await mobile.waitForTimeout(250);
+  const accountBox = await mobile.getByText('演示账户', { exact: true }).boundingBox();
+  const logoutBox = await mobile.getByLabel('退出登录', { exact: true }).boundingBox();
+  assert(accountBox);
+  assert(logoutBox);
+  assert(logoutBox.y > accountBox.y);
   await mobile.getByLabel('耗材目录', { exact: true }).click();
   await mobile.waitForTimeout(180);
   const dimensions = await mobile.evaluate(() => ({

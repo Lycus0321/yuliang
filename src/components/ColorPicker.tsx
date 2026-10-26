@@ -439,9 +439,8 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   hexRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
+    alignItems: 'stretch',
+    gap: 6,
   },
   hexLabel: {
     color: colors.muted,
@@ -454,12 +453,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.input,
     borderWidth: 1,
     color: colors.ink,
-    flex: 1,
     fontFamily: 'Inter_500Medium',
     fontSize: 14,
     minHeight: 44,
     outlineWidth: 0,
     paddingHorizontal: 11,
+    width: '100%',
   },
   presetLabel: {
     color: colors.muted,
