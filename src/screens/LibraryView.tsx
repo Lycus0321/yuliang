@@ -32,6 +32,7 @@ export type SortMode = 'default' | 'weightAsc' | 'weightDesc' | 'name';
 export type ViewMode = 'grid' | 'list';
 
 export type LibraryViewState = {
+  collapsedGroups: string[];
   query: string;
   filter: Filter;
   material: string;
@@ -40,6 +41,7 @@ export type LibraryViewState = {
 };
 
 export const defaultLibraryViewState: LibraryViewState = {
+  collapsedGroups: [],
   query: '',
   filter: 'all',
   material: 'all',
@@ -93,10 +95,18 @@ export function LibraryView({
   const contentWidth = Math.min(width - 48, 1200);
   const columns = contentWidth >= 1000 ? 3 : contentWidth >= 680 ? 2 : 1;
   const compact = contentWidth < 680;
-  const { filter, material, query, sort, viewMode } = state;
+  const { collapsedGroups, filter, material, query, sort, viewMode } = state;
   const [sortOpen, setSortOpen] = useState(false);
   const updateState = (patch: Partial<LibraryViewState>) => {
     onStateChange({ ...state, ...patch });
+  };
+  const toggleGroup = (group: string) => {
+    const collapsed = collapsedGroups.includes(group);
+    updateState({
+      collapsedGroups: collapsed
+        ? collapsedGroups.filter((item) => item !== group)
+        : [...collapsedGroups, group],
+    });
   };
   const availableMaterials = useMemo(
     () => materialOrder.filter((item) => spools.some((spool) => materialGroup(spool) === item)),
@@ -372,33 +382,58 @@ export function LibraryView({
                 (sum, item) => sum + Math.max(0, item.netWeight || 0),
                 0,
               );
+              const collapsed = collapsedGroups.includes(group);
               return (
                 <View key={group} style={styles.group}>
-                  <View style={styles.groupHeader}>
+                  <Pressable
+                    accessibilityHint={collapsed ? '展开该分类' : '收起该分类'}
+                    accessibilityLabel={`${group} 分类`}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: !collapsed }}
+                    onPress={() => toggleGroup(group)}
+                    style={({ pressed }) => [
+                      styles.groupHeader,
+                      pressed && styles.groupHeaderPressed,
+                    ]}
+                  >
                     <View style={styles.groupTitleRow}>
                       <Layers3 color={colors.muted} size={17} strokeWidth={1.7} />
                       <Text style={styles.groupTitle}>{group}</Text>
                       <Text style={styles.groupCount}>{items.length} 盘</Text>
                     </View>
-                    <Text style={styles.groupMeta}>剩余 {(remaining / 1000).toFixed(2)} kg</Text>
-                  </View>
-                  <View style={[styles.grid, viewMode === 'list' && styles.list]}>
-                    {items.map((spool) => (
-                      <SpoolCard
-                        key={spool.id}
-                        layout={viewMode}
-                        onEdit={() => onOpenSpool(spool, 'basic')}
-                        onPress={() => onOpenSpool(spool)}
-                        onWeigh={() => onOpenSpool(spool, 'weight')}
-                        spool={spool}
-                        style={
-                          viewMode === 'list'
-                            ? styles.listCard
-                            : { width: `${100 / columns - 1.2}%` }
-                        }
-                      />
-                    ))}
-                  </View>
+                    <View style={styles.groupActions}>
+                      <Text style={styles.groupMeta}>
+                        剩余 {(remaining / 1000).toFixed(2)} kg
+                      </Text>
+                      <View
+                        style={[
+                          styles.groupChevron,
+                          collapsed && styles.groupChevronCollapsed,
+                        ]}
+                      >
+                        <ChevronDown color={colors.muted} size={16} strokeWidth={1.7} />
+                      </View>
+                    </View>
+                  </Pressable>
+                  {!collapsed ? (
+                    <View style={[styles.grid, viewMode === 'list' && styles.list]}>
+                      {items.map((spool) => (
+                        <SpoolCard
+                          key={spool.id}
+                          layout={viewMode}
+                          onEdit={() => onOpenSpool(spool, 'basic')}
+                          onPress={() => onOpenSpool(spool)}
+                          onWeigh={() => onOpenSpool(spool, 'weight')}
+                          spool={spool}
+                          style={
+                            viewMode === 'list'
+                              ? styles.listCard
+                              : { width: `${100 / columns - 1.2}%` }
+                          }
+                        />
+                      ))}
+                    </View>
+                  ) : null}
                 </View>
               );
             })}
@@ -860,14 +895,22 @@ const styles = StyleSheet.create({
   },
   groupHeader: {
     alignItems: 'center',
+    borderRadius: radii.small,
     flexDirection: 'row',
+    gap: 12,
     justifyContent: 'space-between',
     paddingHorizontal: 2,
+    paddingVertical: 8,
+  },
+  groupHeaderPressed: {
+    opacity: 0.68,
   },
   groupTitleRow: {
     alignItems: 'center',
+    flex: 1,
     flexDirection: 'row',
     gap: 7,
+    minWidth: 0,
   },
   groupTitle: {
     color: colors.ink,
@@ -883,6 +926,21 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontFamily: 'Inter_400Regular',
     fontSize: 13,
+  },
+  groupActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 5,
+  },
+  groupChevron: {
+    alignItems: 'center',
+    height: 20,
+    justifyContent: 'center',
+    transform: [{ rotate: '0deg' }],
+    width: 20,
+  },
+  groupChevronCollapsed: {
+    transform: [{ rotate: '-90deg' }],
   },
   loading: {
     alignItems: 'center',

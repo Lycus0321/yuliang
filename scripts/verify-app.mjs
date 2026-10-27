@@ -11,6 +11,15 @@ await desktop.getByText('先看看演示耗材库').click();
 await desktop.waitForTimeout(1000);
 console.log('DESKTOP_TEXT:', (await desktop.locator('body').innerText()).slice(0, 500));
 await desktop.screenshot({ path: 'artifacts-app-library.png', fullPage: true });
+const plaGroup = desktop.getByRole('button', { name: 'PLA 分类', exact: true });
+await plaGroup.click();
+if ((await desktop.getByText('曜石黑', { exact: true }).count()) !== 0) {
+  throw new Error('折叠分类后仍然显示耗材卡片');
+}
+await plaGroup.click();
+if (!(await desktop.getByText('曜石黑', { exact: true }).isVisible())) {
+  throw new Error('展开分类后未恢复耗材卡片');
+}
 console.log(
   'DESKTOP:',
   await desktop.evaluate(() => ({
