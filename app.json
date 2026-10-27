@@ -2,14 +2,14 @@
   "expo": {
     "name": "余量",
     "slug": "filament-scale",
-    "version": "1.1.9",
+    "version": "1.1.10",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F3F4EF",
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "21",
+      "buildNumber": "22",
       "bundleIdentifier": "com.yuliang.filament"
     },
     "android": {
@@ -21,7 +21,7 @@
       },
       "package": "com.yuliang.filament",
       "softwareKeyboardLayoutMode": "resize",
-      "versionCode": 21,
+      "versionCode": 22,
       "predictiveBackGestureEnabled": false
     },
     "web": {

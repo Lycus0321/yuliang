@@ -142,10 +142,10 @@ export function SpoolCard({
         style={[
           styles.shell,
           styles.shellList,
+          hovered && styles.shellListHovered,
           style,
           {
             transform: [{ translateY }],
-            shadowOpacity: hovered ? 0.12 : 0.06,
           },
         ]}
       >
@@ -268,10 +268,10 @@ export function SpoolCard({
     <Animated.View
       style={[
         styles.shell,
+        hovered && styles.shellHovered,
         style,
         {
           transform: [{ translateY }],
-          shadowOpacity: hovered ? 0.12 : 0.06,
         },
       ]}
     >
@@ -366,16 +366,18 @@ const styles = StyleSheet.create({
   shell: {
     backgroundColor: 'rgba(255,255,255,0.84)',
     borderRadius: radii.medium,
-    shadowColor: '#1A2B23',
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 24,
-    elevation: 3,
+    boxShadow: '0 8px 24px rgba(26,43,35,0.06)',
     overflow: 'hidden',
     position: 'relative',
   },
+  shellHovered: {
+    boxShadow: '0 10px 28px rgba(26,43,35,0.12)',
+  },
   shellList: {
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 12,
+    boxShadow: '0 3px 12px rgba(26,43,35,0.06)',
+  },
+  shellListHovered: {
+    boxShadow: '0 4px 14px rgba(26,43,35,0.12)',
   },
   card: {
     borderRadius: radii.medium,
@@ -485,9 +487,7 @@ const styles = StyleSheet.create({
   },
   titleSwatchCore: {
     backgroundColor: 'rgba(255,255,255,0.55)',
-    borderColor: 'rgba(0,0,0,0.08)',
     borderRadius: 999,
-    borderWidth: 1,
     height: 9,
     width: 9,
   },
