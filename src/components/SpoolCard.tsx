@@ -478,9 +478,7 @@ const styles = StyleSheet.create({
   },
   titleSwatch: {
     alignItems: 'center',
-    borderColor: colors.line,
     borderRadius: 9,
-    borderWidth: 1,
     height: 32,
     justifyContent: 'center',
     width: 32,

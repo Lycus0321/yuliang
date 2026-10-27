@@ -2,8 +2,8 @@
 
 拓竹云端耗材称重与库存管理应用，基于 Expo + React Native + TypeScript，同时输出 PWA、Android，并保留 iOS 上架能力。
 
-- 当前版本：`1.1.8`
-- Android：`versionCode 20`
+- 当前版本：`1.1.9`
+- Android：`versionCode 21`
 
 ```text
 拓竹账号登录
