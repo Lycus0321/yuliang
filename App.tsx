@@ -27,6 +27,7 @@ import {
 } from './src/api';
 import { AppNav, type AppView } from './src/components/AppNav';
 import { SpoolEditorModal } from './src/components/SpoolEditorModal';
+import { APP_DESKTOP_BREAKPOINT } from './src/layout';
 import { demoSpools } from './src/demo';
 import { registerServiceWorker } from './src/pwa';
 import {
@@ -78,7 +79,7 @@ export default function App() {
 function AppContent() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const desktop = width >= 900;
+  const desktop = width >= APP_DESKTOP_BREAKPOINT;
   const [session, setSession] = useState<Session | null>(null);
   const [spools, setSpools] = useState<Spool[]>([]);
   const [booting, setBooting] = useState(true);
@@ -313,7 +314,7 @@ function AppContent() {
     const next =
       mode === 'replace'
         ? normalized
-        : mergePreferences(preferences, normalized);
+        : mergePreferences(preferences, imported);
     setPreferences(next);
     setForceRfidEdit(next.forceRfidEdit);
     await savePreferences(next);
@@ -353,6 +354,15 @@ function AppContent() {
     try {
       if (!session.demo) await deleteSpool(session, spool.id);
       setSpools((current) => current.filter((item) => item.id !== spool.id));
+      setPreferences((current) => {
+        const key = String(spool.id);
+        if (!(key in current.spoolWeights)) return current;
+        const spoolWeights = { ...current.spoolWeights };
+        delete spoolWeights[key];
+        const next = { ...current, spoolWeights };
+        void savePreferences(next);
+        return next;
+      });
     } catch (err) {
       await recoverIfUnauthorized(err);
       throw err;

@@ -2,8 +2,8 @@
 
 拓竹云端耗材称重与库存管理应用，基于 Expo + React Native + TypeScript，同时输出 PWA、Android，并保留 iOS 上架能力。
 
-- 当前版本：`1.1.6`
-- Android：`versionCode 18`
+- 当前版本：`1.1.7`
+- Android：`versionCode 19`
 
 ```text
 拓竹账号登录
@@ -217,6 +217,10 @@ Playwright 回归覆盖：
 - 皮重品牌/型号匹配。
 - 标记用尽、删除确认和已用尽筛选。
 - JSON 输入框导出、无效 JSON、合并导入和完整替换。
+- 局部 JSON 合并时保留未提供的本机标量设置。
+- 50 字备注在写入 RFID 身份前缀后不被截断。
+- 内置通用空盘不可隐藏；删除料盘同步清理重量记忆。
+- 979px 使用移动导航，980px 起统一切换桌面布局。
 - `320px`、`390px`、`768px` 移动端和平板布局。
 
 主要脚本：
@@ -228,6 +232,7 @@ scripts/verify-settings.mjs
 scripts/verify-unified-management.mjs
 scripts/verify-tare-mapping.mjs
 scripts/verify-linkage.mjs
+scripts/verify-review-regressions.mjs
 ```
 
 ## 数据接口

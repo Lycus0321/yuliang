@@ -563,6 +563,7 @@ const styles = StyleSheet.create({
   },
   locationBadge: {
     alignItems: 'center',
+    alignSelf: 'flex-start',
     backgroundColor: colors.mint,
     borderRadius: 999,
     flexDirection: 'row',

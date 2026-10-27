@@ -22,6 +22,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   bambuColors,
   colorsForFilament,
@@ -75,6 +76,13 @@ function normalizeColor(value: string) {
   return /^[0-9A-F]{6}$/.test(clean) ? `#${clean}` : '#808080';
 }
 
+function removeIdentityPrefix(value: string) {
+  return value.replace(
+    /^品牌:.*? 类型:.*? 色:#[0-9A-F]{6}(?: \| )?/,
+    '',
+  );
+}
+
 function includedSelected<T>(options: T[], commonCount: number, selected: T, equals: (a: T, b: T) => boolean) {
   const list = options.slice(0, commonCount);
   if (!list.some((item) => equals(item, selected))) list.push(selected);
@@ -97,6 +105,7 @@ export function SpoolEditorModal({
   onWeightMemoryChange,
 }: Props) {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const desktop = width >= 900;
   const [tab, setTab] = useState<Tab>('basic');
   const [name, setName] = useState('');
@@ -465,7 +474,8 @@ export function SpoolEditorModal({
         ]
           .filter(Boolean)
           .join(' ');
-        nextNote = `${identity}${nextNote ? ` | ${nextNote}` : ''}`.slice(0, 50);
+        const userNote = removeIdentityPrefix(nextNote).slice(0, 50);
+        nextNote = `${identity}${userNote ? ` | ${userNote}` : ''}`;
       }
 
       const update: SpoolUpdate = {
@@ -534,7 +544,13 @@ export function SpoolEditorModal({
         style={styles.overlay}
       >
         <Pressable onPress={requestClose} style={styles.backdrop} />
-        <View style={[styles.dialog, desktop ? styles.dialogDesktop : styles.dialogMobile]}>
+        <View
+          style={[
+            styles.dialog,
+            desktop ? styles.dialogDesktop : styles.dialogMobile,
+            !desktop && { marginBottom: Math.max(0, insets.bottom) },
+          ]}
+        >
           <View style={styles.header}>
             <View style={styles.identity}>
               <View style={[styles.swatch, { backgroundColor: colorHex }]}>
@@ -784,7 +800,7 @@ export function SpoolEditorModal({
                   ) : null}
                 </View>
 
-                <Field label="备注">
+                <Field label={`备注（${note.length}/50）`}>
                   <TextInput
                     accessibilityLabel="耗材备注"
                     maxLength={50}

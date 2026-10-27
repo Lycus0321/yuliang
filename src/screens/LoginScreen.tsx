@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login, loginWithCode, loginWithTfa } from '../api';
+import { APP_DESKTOP_BREAKPOINT } from '../layout';
 import { colors, radii, type } from '../theme';
 import type { Region, Session } from '../types';
 
@@ -24,7 +25,7 @@ type Props = {
 export function LoginScreen({ onAuthenticated }: Props) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const desktop = width >= 900;
+  const desktop = width >= APP_DESKTOP_BREAKPOINT;
   const [region, setRegion] = useState<Region>('china');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

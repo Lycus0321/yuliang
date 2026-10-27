@@ -10,10 +10,10 @@ await page.waitForTimeout(800);
 await page.getByText('曜石黑').first().click();
 await page.waitForTimeout(300);
 
-const before = await page.getByText('备注', { exact: true }).boundingBox();
+const before = await page.getByText(/^备注/).boundingBox();
 await page.getByText('品牌 · Bambu Studio').click();
 await page.waitForTimeout(200);
-const after = await page.getByText('备注', { exact: true }).boundingBox();
+const after = await page.getByText(/^备注/).boundingBox();
 console.log('NOTE_SHIFT:', before?.y, after?.y, (after?.y || 0) - (before?.y || 0));
 await page.screenshot({ path: 'artifacts-app-dropdown.png', fullPage: true });
 

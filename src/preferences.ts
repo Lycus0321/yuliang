@@ -252,8 +252,15 @@ export async function savePreferences(preferences: AppPreferences) {
 
 export function mergePreferences(
   current: AppPreferences,
-  incoming: AppPreferences,
+  incomingRaw: unknown,
 ): AppPreferences {
+  const incoming = normalizePreferences(incomingRaw);
+  const hasIncomingField = (key: keyof AppPreferences) =>
+    Boolean(
+      incomingRaw &&
+        typeof incomingRaw === 'object' &&
+        Object.prototype.hasOwnProperty.call(incomingRaw, key),
+    );
   const typeVendors = new Set([
     ...Object.keys(current.customTypes),
     ...Object.keys(incoming.customTypes),
@@ -265,6 +272,15 @@ export function mergePreferences(
   return normalizePreferences({
     ...current,
     ...incoming,
+    forceRfidEdit: hasIncomingField('forceRfidEdit')
+      ? incoming.forceRfidEdit
+      : current.forceRfidEdit,
+    defaultTarePresetId: hasIncomingField('defaultTarePresetId')
+      ? incoming.defaultTarePresetId
+      : current.defaultTarePresetId,
+    defaultExtraPresetId: hasIncomingField('defaultExtraPresetId')
+      ? incoming.defaultExtraPresetId
+      : current.defaultExtraPresetId,
     customBrands: [...current.customBrands, ...incoming.customBrands],
     hiddenBrands: [...current.hiddenBrands, ...incoming.hiddenBrands],
     hiddenTypes: [...current.hiddenTypes, ...incoming.hiddenTypes],

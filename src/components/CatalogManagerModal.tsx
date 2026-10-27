@@ -23,6 +23,7 @@ import {
   View,
 } from 'react-native';
 import { brandOptions, filamentCatalog } from '../catalog';
+import { APP_DESKTOP_BREAKPOINT } from '../layout';
 import type { AppPreferences, LocalColor } from '../preferences';
 import { setAppBusy } from '../pwa';
 import {
@@ -75,7 +76,7 @@ export function CatalogManagerView({
   onBack,
 }: Props) {
   const { width } = useWindowDimensions();
-  const desktop = width >= 980;
+  const desktop = width >= APP_DESKTOP_BREAKPOINT;
   const officialBrands = useMemo(() => getOfficialBrands(catalog, presets), [
     catalog,
     presets,

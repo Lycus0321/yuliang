@@ -1265,12 +1265,18 @@ function optionRows(
   return presetRows.map((item): OptionRow => {
     const association =
       kind === 'tare' ? [item.brand, item.type].filter(Boolean).join(' / ') : '';
+    const locked = kind === 'tare' && item.id === 'generic-200';
     return {
       id: item.id,
       name: item.name,
-      meta: `${item.grams} g · ${kind === 'tare' ? '空盘皮重' : '附加重量'}${
-        association ? ` · ${association}` : ''
-      }`,
+      meta: [
+        `${item.grams} g`,
+        kind === 'tare' ? '空盘皮重' : '附加重量',
+        association,
+        locked ? '内置必选' : '',
+      ]
+        .filter(Boolean)
+        .join(' · '),
       hidden: (kind === 'tare'
         ? preferences.hiddenTarePresetIds
         : preferences.hiddenExtraPresetIds
@@ -1280,6 +1286,9 @@ function optionRows(
         : preferences.customExtraPresets
       ).some((custom) => custom.id === item.id),
       isDefault: item.id === defaultId,
+      locked,
+      lockReason: locked ? '内置必选，不能隐藏' : undefined,
+      switchLabel: item.name,
     };
   });
 }
