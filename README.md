@@ -1,104 +1,261 @@
 # 余量
 
-拓竹云端耗材库的手机客户端原型。核心流程：
+拓竹云端耗材称重与库存管理应用，基于 Expo + React Native + TypeScript，同时输出 PWA、Android，并保留 iOS 上架能力。
+
+- 当前版本：`1.1.6`
+- Android：`versionCode 18`
 
 ```text
-拓竹账号登录 -> 读取耗材库 -> 整盘称重 -> 扣除皮重 -> 写回 netWeight
+拓竹账号登录
+  -> 读取云端耗材库
+  -> 整盘称重
+  -> 扣除空盘皮重与其他重量
+  -> 写回耗材剩余净重
 ```
 
-## 运行
+## 当前功能
 
-浏览器调试分别启动 Cloudflare Worker 与 Expo：
+### 登录与会话
+
+- 中国大陆区、国际区切换。
+- Bambu 账号密码登录。
+- 邮箱或短信验证码登录。
+- 验证器 TOTP 双重验证流程。
+- Web/PWA 登录态由 Cloudflare Worker 和 HttpOnly Cookie 管理。
+- Android/iOS Token 保存在系统安全存储中。
+- 支持会话恢复、退出登录、401 自动返回登录页。
+- 支持本地演示模式。
+
+### 耗材库
+
+- 从拓竹云端读取耗材库。
+- 按 PLA、PETG、ABS、ASA、TPU、PC、PA、其他材料分组。
+- 显示品牌、型号、颜色、装入位置、RFID/手动类型和剩余量。
+- 搜索品牌、型号、颜色和备注。
+- 筛选全部、已装入、低余量和已用尽。
+- 已用尽耗材默认隐藏。
+- 支持默认、余量升降序和名称排序。
+- 支持卡片与列表视图，移动端保留 RFID、装入位置和已用尽标识。
+- 筛选、排序和视图状态在页面切换后保留。
+- 支持下拉刷新与手动同步。
+
+### 料盘编辑与称重
+
+- 编辑和称重位于同一料盘弹窗，通过 Tab 切换。
+- 可编辑名称、品牌、型号、颜色和备注。
+- 品牌、型号、颜色联动选择。
+- 使用“加载更多”展开被隐藏的选项。
+- 输入整盘总重后自动扣除皮重和其他重量。
+- 校验空值、非法数字、负数、超重和总重小于皮重的情况。
+- 每个料盘记忆上次使用的皮重和其他重量。
+- 支持标记用尽和从拓竹云端删除。
+- 未保存修改关闭弹窗时二次确认。
+
+### 耗材目录
+
+“耗材目录”是一级入口，结构为：
+
+```text
+品牌
+  -> 多个型号
+       -> 多个颜色
+       -> 一个默认空盘皮重
+```
+
+- 新增、编辑、隐藏和删除自定义品牌、型号、颜色。
+- 隐藏品牌联动隐藏型号和颜色。
+- 隐藏型号联动隐藏颜色。
+- 官方目录可用时优先使用云端数据，失败时回退内置目录。
+- 删除目录选项不会修改已有料盘。
+- 型号可绑定默认空盘皮重。
+- 新增和编辑使用弹窗，列表与表单分离。
+- 移动端按品牌 → 型号 → 颜色分步进入。
+
+### 颜色与皮重
+
+- 颜色选择器支持拖拽饱和度/明度面板和色相条。
+- 支持常用色块、HEX 输入和实时预览。
+- 官方颜色只读，自定义颜色可编辑和删除。
+- 空盘皮重与其他重量均使用“名称 + 克重”结构。
+- 内置空盘仅保留“通用空盘 200 g”。
+- 皮重可绑定品牌和型号，并支持隐藏、默认和本机覆盖。
+- 称重时按“上次选择 → 型号默认 → 品牌+型号 → 品牌 → 型号 → 全局默认”匹配。
+
+### RFID 策略
+
+- 默认安全模式保留 RFID 原始品牌、型号和颜色。
+- 自定义身份信息写入料盘名称和备注。
+- 单纯修改备注不会追加身份字段。
+- 偏好设置中可全局开启“强制修改 RFID 字段”。
+- 强制模式会直接覆盖品牌、型号、颜色和颜色数组。
+- 强制模式可能与 Bambu Studio、Handy 或实体标签冲突。
+
+### 数据管理
+
+- 本地偏好使用 AsyncStorage 持久化。
+- 导出 JSON 在输入框中展示，由用户手动选择复制。
+- 导入 JSON 通过输入框粘贴，不生成文件，也不调用剪切板 API。
+- 支持合并导入和完整替换。
+- 合并时按 ID 和内容去重。
+- 完整替换前二次确认。
+- 自动拦截空内容、无效 JSON 和非对象数据。
+- JSON 不包含 Bambu Token、Cookie 或账号凭证。
+
+### 响应式与 Android
+
+- PC 顶部导航，手机底部导航。
+- 内容最大宽度 `1200px`，页面栅格左右留白 `24px`。
+- 适配安全区域、窄屏和 Android 软键盘。
+- Android 使用键盘 `resize` 模式。
+- 弹层正文可滚动，底部操作区固定。
+- Android 返回键优先关闭下拉框、弹层，再返回耗材库。
+- 移动端偏好设置、耗材目录和二级弹层宽度统一。
+- PWA 更新后自动刷新，编辑期间暂停自动刷新。
+
+## 技术架构
+
+| 平台 | API 访问 | 会话存储 |
+|---|---|---|
+| Web/PWA | Cloudflare Worker 代理 `/api/*` | Worker 加密 HttpOnly Cookie |
+| Android | 直接访问 `api.bambulab.cn` / `api.bambulab.com` | Expo SecureStore |
+| iOS | 与 Android 相同的直连能力 | Expo SecureStore |
+
+- Worker 同时托管 `dist-web` 静态资源和 API。
+- 原生端不依赖 Worker，也不需要 `EXPO_PUBLIC_API_BASE`。
+- 本地偏好使用 AsyncStorage。
+- 会话、强制 RFID 开关和料盘重量记忆使用 SecureStore。
+
+## 本地运行
+
+```powershell
+cd filament-app
+npm install
+```
+
+分别启动 Worker 和 Expo：
 
 ```powershell
 npm run worker:dev
 npm run web
 ```
 
-浏览器访问 `http://localhost:8081`。Worker 本地运行在 `http://localhost:8787`，负责 Bambu 登录、HttpOnly 会话和耗材 API 转发。
+地址：
 
-Web 与 PWA 由 Worker 同源托管。Android 和 iOS 原生端直接连接拓竹 API，不经过 Worker，也不需要配置 `EXPO_PUBLIC_API_BASE`。
+```text
+Expo Web：http://localhost:8081
+Worker：http://localhost:8787
+```
 
 ## 构建与部署
+
+### PWA
 
 ```powershell
 npm run build:web
 npm run worker:deploy
 ```
 
-首次部署前设置生产会话密钥：
+首次部署前设置 Worker 会话密钥：
 
 ```powershell
 npx wrangler secret put SESSION_SECRET --config worker/wrangler.jsonc
 ```
 
-Worker 会同时托管 `dist-web` 静态资源和 `/api/*`。登录、验证码和双重验证接口使用 Cloudflare 原生 Rate Limiting 绑定，按来源 IP 限制为每分钟 10 次。Android JS Bundle 可通过以下命令验证：
+当前地址：
 
-```powershell
-npx expo export --platform android --output-dir dist-android
+```text
+https://yuliang.lykkk.fun
 ```
 
-## Web UI 原型
+### Android APK
 
-独立的静态 Web 原型位于 `prototype/`，不会调用接口：
+当前 APK 由 GitHub Actions 手动构建，不随每次推送自动触发：
+
+```powershell
+gh workflow run android-apk.yml --ref master
+```
+
+工作流会生成 APK 和 SHA-256 文件，并覆盖发布到：
+
+```text
+https://github.com/Lycus0321/filament-app/releases/tag/android-latest
+```
+
+本地验证 Android Bundle：
+
+```powershell
+npx expo export --platform android --output-dir dist-android-next
+```
+
+### iOS
+
+EAS 脚本保留用于后续 TestFlight：
+
+```powershell
+npm run build:ios:preview
+```
+
+首次使用需要登录 Expo 账号并完成 Apple 签名配置。
+
+## 验证
+
+```powershell
+npx tsc --noEmit
+npm run worker:typecheck
+npx expo-doctor
+npm run build:web
+npx expo export --platform android --output-dir dist-android-next
+```
+
+Playwright 回归覆盖：
+
+- 登录、耗材库和演示模式。
+- 料盘编辑、称重和未保存保护。
+- RFID 安全模式与强制修改。
+- 品牌、型号、颜色联动。
+- 耗材目录统一管理。
+- 皮重品牌/型号匹配。
+- 标记用尽、删除确认和已用尽筛选。
+- JSON 输入框导出、无效 JSON、合并导入和完整替换。
+- `320px`、`390px`、`768px` 移动端和平板布局。
+
+主要脚本：
+
+```text
+scripts/verify-app.mjs
+scripts/verify-regressions.mjs
+scripts/verify-settings.mjs
+scripts/verify-unified-management.mjs
+scripts/verify-tare-mapping.mjs
+scripts/verify-linkage.mjs
+```
+
+## 数据接口
+
+```text
+登录：POST /v1/user-service/user/login
+读取耗材库：GET /v1/design-user-service/my/filament/v2
+修改剩余重量：PUT /v1/design-user-service/my/filament/v2
+删除耗材：DELETE /v1/design-user-service/my/filament/v2/batch
+```
+
+- 中国大陆：`api.bambulab.cn`
+- 国际区：`api.bambulab.com`
+
+## 已知限制
+
+- 拓竹接口为社区逆向的非公开接口，接口变化后需要适配。
+- TOTP 已有代码支持，但仍需覆盖更多真实账号和设备组合。
+- 不支持离线修改耗材。
+- 本地偏好不自动跨设备同步，需要手动复制和粘贴 JSON。
+- Android 当前通过 GitHub Actions 测试 Release 分发，未进行 Google Play 上架。
+- iOS 尚未完成 TestFlight 和 App Store 配置。
+- RFID 强制修改可能被 Studio、Handy 或实体标签数据覆盖。
+
+## 静态原型
+
+`prototype/` 为历史交互原型，不调用真实接口：
 
 ```powershell
 npx serve prototype -l 4173
 ```
-
-浏览器访问 `http://localhost:4173`。原型包含耗材库、料盘编辑弹窗、偏好设置和账号登录界面。称重与基本信息编辑都归入同一料盘弹窗，通过 Tab 切换。
-
-品牌、类型与颜色预设参考 BambuStudio `resources/profiles/BBL`。编辑弹窗默认只显示常用选项，剩余选项通过下拉框内的“加载更多”展开。
-“耗材目录”作为与耗材库、偏好设置并列的一级入口，按品牌 → 型号 → 颜色组织。一个品牌可包含多个型号，一个型号可配置多个颜色和一个默认空盘皮重；删除自定义品牌或型号时会清理对应颜色与默认皮重配置，但不会改动已使用这些选项的料盘。
-品牌、型号和颜色的添加或编辑通过弹窗表单完成，目录页负责浏览、筛选、显示控制和删除，避免在树形列表中混排输入控件。
-耗材库按材料分组，支持全部、已装入、低余量和已用尽状态筛选，并显示各状态数量与材料筛选。支持移动端搜索、卡片和列表两种密度，以及默认、余量升降序和名称排序。移动端列表仍显示 RFID/手动和已用尽标识。每张料盘卡提供编辑和称重快捷入口，打开弹窗后直接进入对应 Tab，筛选和视图状态在页面切换后保留。
-品牌、型号和颜色采用分层显示规则：隐藏品牌会同步隐藏其型号和颜色，隐藏型号会同步隐藏其颜色；子项原显示状态会保留，解除上层隐藏后恢复。
-型号管理按品牌分组，颜色管理按 Bambu 型号色卡和通用颜色分组；分组面板可独立展开或收起，避免一次铺开全部选项。
-选项管理采用列表与表单分离的流程：列表只负责查看、显示控制、删除和默认项设置，点击底部新增按钮或铅笔编辑后进入独立表单，保存或取消后返回列表。
-自定义颜色支持新增和编辑，可直接拖拽饱和度/明度面板与色相条生成颜色，也可点选常用色块或输入 HEX 精确调整；内置颜色保持只读，不会因本地编辑改动官方色卡。
-
-空盘皮重和其他重量使用“名称 + 克重”的预设结构。内置空盘只保留 `通用空盘 200 g`，其余皮重由用户自行新增或编辑。
-空盘皮重预设可绑定适用品牌与型号。称重时优先匹配品牌和型号完全一致的预设，其次匹配品牌级预设，再回退到全局默认皮重。
-皮重预设的品牌与型号通过现有官方/自定义目录选择，不再依赖自由文本输入，避免拼写和别名造成匹配失败。
-预设管理支持新增、编辑、删除、隐藏和设置默认项。内置预设的名称与克重修改只保存在本机，不会改动 Bambu Studio；删除默认预设后会自动回退到内置默认值。
-自定义选项删除前需要二次确认，颜色列表显示实际色样；云端目录可用时，品牌与型号选项优先使用云端结果，内置目录仅作为请求失败时的回退。
-
-Web 端会通过 Worker 的 `/api/catalog` 同步 Bambu 官方耗材目录和用户切片预设，原生端使用相同的直连逻辑获取目录。目录不可用时回退到内置预设。每个料盘的皮重和其他重量选择会保存在本机。
-
-本地偏好使用 AsyncStorage 持久化。数据管理通过 JSON 输入框手动导出和导入，不生成文件、不读取剪切板；导入仍支持合并和完整替换两种模式，覆盖 RFID 开关、默认皮重、自定义选项、隐藏项和每盘重量记忆。
-
-## 移动端构建
-
-Android 内测 APK 由 GitHub Actions 手动触发构建并发布到 `android-latest` Release，不再跟随每次推送自动构建。手动构建命令为：
-
-```powershell
-npm run build:android:preview
-npm run build:ios:preview
-```
-
-首次通过 EAS 构建时需要登录 Expo 账号并完成 Android 或 Apple 签名配置。
-
-## 数据接口
-
-- 登录：`POST /v1/user-service/user/login`
-- 读取耗材库：`GET /v1/design-user-service/my/filament/v2`
-- 修改剩余重量：`PUT /v1/design-user-service/my/filament/v2`
-- 删除耗材：`DELETE /v1/design-user-service/my/filament/v2/batch`
-
-中国大陆使用 `api.bambulab.cn`，国际区使用 `api.bambulab.com`。
-
-## 限制
-
-- 接口为社区逆向的非公开接口，拓竹调整接口后需要适配。
-- 当前版本支持密码登录和邮箱/短信验证码登录，暂不支持 TOTP 双重验证。
-- 浏览器和 PWA 通过 Cloudflare Worker 访问拓竹云，Bambu Token 由 HttpOnly Cookie 保存。
-- Android 和 iOS 原生端直接访问拓竹 API，Bambu Token 使用系统安全存储保存。
-
-## RFID 料盘编辑
-
-默认使用安全模式：保留 RFID 原始品牌、类型和颜色，将自定义信息同时写入料盘名称和备注。
-
-打开编辑页的“强制修改 RFID 字段”开关后，客户端会直接写回 `filamentVendor`、`filamentType`、`color` 和 `colors`。该模式可能导致 Studio 刷新后与 RFID 标签数据冲突。
-安全模式只在品牌、型号或颜色实际发生变化时写入名称和备注；单纯修改备注不会生成额外的身份信息。称重页会阻止小于皮重与其他重量之和的整盘总重。
-料盘弹窗提供“标记用尽”和“删除料盘”。用尽会把剩余量写为 `0 g` 并保留云端记录；删除会从拓竹云耗材库永久移除记录，已装在 AMS 中的 RFID 料盘可能在下次同步时重新出现。
-剩余量为 `0 g` 的耗材默认从全部、已装入和低余量列表中隐藏，可通过“已用尽”筛选查看。
