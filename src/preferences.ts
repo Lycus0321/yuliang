@@ -161,17 +161,22 @@ function normalizePresets(value: unknown): LocalPreset[] {
   const byId = new Map<string, LocalPreset>();
   value
     .filter((preset) => preset && typeof preset === 'object')
-    .map((preset) => ({
-      id: String(
-        preset.id ||
-          `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      ),
-      name: String(preset.name || ''),
-      grams: Number(preset.grams || 0),
-      brand: String(preset.brand || '').trim() || undefined,
-      type: String(preset.type || '').trim() || undefined,
-    }))
-    .filter((preset) => preset.name && preset.grams >= 0)
+    .map((preset) => {
+      const grams = Math.round(Number(preset.grams || 0));
+      return {
+        id: String(
+          preset.id ||
+            `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        ),
+        name: String(preset.name || ''),
+        grams: Number.isFinite(grams) ? grams : 0,
+        brand: String(preset.brand || '').trim() || undefined,
+        type: String(preset.type || '').trim() || undefined,
+      };
+    })
+    .filter(
+      (preset) => preset.name && preset.grams >= 0 && preset.grams <= 20000,
+    )
     .forEach((preset) => byId.set(preset.id, preset));
   const identities = new Set<string>();
   return [...byId.values()].filter((preset) => {
@@ -217,18 +222,27 @@ function normalizePresetOverrides(
   return Object.fromEntries(
     Object.entries(value)
       .filter(([, override]) => override && typeof override === 'object')
-      .map(([id, override]) => [
-        id,
-        {
-          name: String((override as LocalPresetOverride).name || ''),
-          grams: Number((override as LocalPresetOverride).grams || 0),
-          brand: String((override as LocalPresetOverride).brand || '').trim() || undefined,
-          type: String((override as LocalPresetOverride).type || '').trim() || undefined,
-        },
-      ])
+      .map(([id, override]) => {
+        const grams = Math.round(
+          Number((override as LocalPresetOverride).grams || 0),
+        );
+        return [
+          id,
+          {
+            name: String((override as LocalPresetOverride).name || ''),
+            grams: Number.isFinite(grams) ? grams : 0,
+            brand:
+              String((override as LocalPresetOverride).brand || '').trim() ||
+              undefined,
+            type:
+              String((override as LocalPresetOverride).type || '').trim() ||
+              undefined,
+          },
+        ] as const;
+      })
       .filter(([, override]) => {
         const preset = override as LocalPresetOverride;
-        return preset.name && preset.grams >= 0;
+        return preset.name && preset.grams >= 0 && preset.grams <= 20000;
       }),
   );
 }

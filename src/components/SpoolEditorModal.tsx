@@ -1,6 +1,7 @@
 import {
   Check,
   ChevronDown,
+  CircleAlert,
   CircleOff,
   Nfc,
   Pencil,
@@ -81,6 +82,10 @@ function removeIdentityPrefix(value: string) {
     /^品牌:.*? 类型:.*? 色:#[0-9A-F]{6}(?: \| )?/,
     '',
   );
+}
+
+function normalizeIntegerInput(value: string) {
+  return value.split(/[.,]/)[0].replace(/\D/g, '').slice(0, 5);
 }
 
 function includedSelected<T>(options: T[], commonCount: number, selected: T, equals: (a: T, b: T) => boolean) {
@@ -230,17 +235,16 @@ export function SpoolEditorModal({
     extraPresets.find((item) => item.id === extraId) ||
     extraPresets[0] ||
     extraFallback;
-  const normalizedGross = gross.trim().replace(',', '.');
-  const grossValue = normalizedGross ? Number(normalizedGross) : Number.NaN;
+  const grossValue = gross ? Number(gross) : Number.NaN;
   const tareTotal = tare.grams + extra.grams;
   const net = Number.isFinite(grossValue)
     ? Math.max(0, grossValue - tareTotal)
     : 0;
   const weightError =
-    !normalizedGross
+    !gross
       ? '请输入整盘总重。'
       : !Number.isFinite(grossValue)
-        ? '请输入有效数字，例如 972.5。'
+        ? '请输入有效整数克重，例如 972。'
         : grossValue < 0
           ? '整盘总重不能为负数。'
           : grossValue > 20000
@@ -845,8 +849,12 @@ export function SpoolEditorModal({
                 <Field label="整盘总重">
                   <TextInput
                     accessibilityLabel="整盘总重，单位克"
-                    keyboardType="decimal-pad"
-                    onChangeText={setGross}
+                    keyboardType="number-pad"
+                    maxLength={5}
+                    onChangeText={(value) => {
+                      setGross(normalizeIntegerInput(value));
+                      setError('');
+                    }}
                     placeholder="972"
                     placeholderTextColor={colors.muted}
                     selectionColor={colors.primary}
@@ -1009,8 +1017,14 @@ export function SpoolEditorModal({
               ) : null}
             </View>
 
-            {error ? <Text style={styles.error}>{error}</Text> : null}
           </ScrollView>
+
+          {error ? (
+            <View accessibilityLiveRegion="polite" style={styles.requestError}>
+              <CircleAlert color={colors.danger} size={17} strokeWidth={1.8} />
+              <Text style={styles.requestErrorText}>{error}</Text>
+            </View>
+          ) : null}
 
           <View style={styles.footer}>
             <Text style={styles.footerNote}>
@@ -1778,6 +1792,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginTop: 8,
+  },
+  requestError: {
+    alignItems: 'flex-start',
+    backgroundColor: colors.dangerSoft,
+    borderColor: 'rgba(185,65,55,0.18)',
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+    marginHorizontal: 22,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+  },
+  requestErrorText: {
+    color: colors.danger,
+    flex: 1,
+    fontFamily: 'Inter_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
   },
   footer: {
     alignItems: 'center',

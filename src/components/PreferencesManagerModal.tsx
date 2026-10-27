@@ -51,6 +51,16 @@ import { confirmAction } from '../confirm';
 export type ManagerKind = 'brand' | 'type' | 'color' | 'tare' | 'extra';
 type ManagerMode = 'list' | 'create' | 'edit';
 
+function normalizeIntegerInput(value: string) {
+  return value.split(/[.,]/)[0].replace(/\D/g, '').slice(0, 5);
+}
+
+function parseIntegerGrams(value: string) {
+  if (!/^\d+$/.test(value.trim())) return null;
+  const grams = Number(value);
+  return Number.isSafeInteger(grams) && grams <= 20000 ? grams : null;
+}
+
 type Props = {
   catalog: CatalogEntry[];
   kind: ManagerKind | null;
@@ -437,9 +447,9 @@ export function PreferencesManagerModal({
       return;
     }
     if (isPreset && editingPresetId) {
-      const grams = Number(value);
-      if (!Number.isFinite(grams) || grams < 0) {
-        setFormError('请输入有效克重。');
+      const grams = parseIntegerGrams(value);
+      if (grams === null) {
+        setFormError('请输入 0 到 20000 的整数克重。');
         return;
       }
       const existing =
@@ -606,9 +616,9 @@ export function PreferencesManagerModal({
         'color:global': true,
       }));
     } else {
-      const grams = Number(value);
-      if (!Number.isFinite(grams) || grams < 0) {
-        setFormError('请输入有效克重。');
+      const grams = parseIntegerGrams(value);
+      if (grams === null) {
+        setFormError('请输入 0 到 20000 的整数克重。');
         return;
       }
       const existing =
@@ -900,9 +910,10 @@ export function PreferencesManagerModal({
                   {isPreset ? (
                     <TextInput
                       accessibilityLabel="克重"
+                      maxLength={5}
                       keyboardType="numeric"
                       onChangeText={(next) => {
-                        setValue(next);
+                        setValue(normalizeIntegerInput(next));
                         setFormDirty(true);
                       }}
                       placeholder="克重"

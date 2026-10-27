@@ -167,8 +167,13 @@ function AppContent() {
             const options = await getCatalog(activeSession);
             setCatalog(options.catalog);
             setPresets(options.presets);
-          } catch {
-            // Static catalog fallback remains available if cloud options fail.
+          } catch (catalogError) {
+            if (await recoverIfUnauthorized(catalogError)) return;
+            const message =
+              catalogError instanceof Error
+                ? catalogError.message
+                : '耗材目录同步失败。';
+            setError(`${message} 已使用内置耗材目录。`);
           }
         }
       } catch (err) {

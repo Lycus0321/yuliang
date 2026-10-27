@@ -113,6 +113,80 @@ try {
     await context.close();
   }
 
+  {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+    });
+    const page = await context.newPage();
+    await page.goto(appUrl);
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'bambu-session-v1',
+        JSON.stringify({
+          token: 'fake-token',
+          region: 'china',
+          email: 'test@example.com',
+          demo: false,
+        }),
+      );
+    });
+    await page.route('**/api/spools', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            spools: [
+              {
+                id: 101,
+                filamentVendor: 'Bambu Lab',
+                filamentType: 'PLA',
+                filamentName: 'PLA Basic',
+                displayName: '测试料盘',
+                color: '#202421',
+                netWeight: 812,
+                totalNetWeight: 1000,
+                inPrinter: false,
+                createType: 'manual',
+              },
+            ],
+          }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: '更新耗材接口超时，请稍后重试。' }),
+      });
+    });
+    await page.route('**/api/catalog', async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: '读取耗材目录失败（503）。' }),
+      });
+    });
+    await page.reload();
+    await page.waitForTimeout(900);
+    assert(
+      await page.getByText(/已使用内置耗材目录/).isVisible(),
+    );
+    await page.getByText('测试料盘', { exact: true }).click();
+    await page.getByText('重量', { exact: true }).click();
+    const weightInput = page.getByLabel('整盘总重，单位克', { exact: true });
+    await weightInput.fill('1012.5');
+    assert.equal(await weightInput.inputValue(), '1012');
+    await page.getByText('保存重量', { exact: true }).click();
+    await page.waitForTimeout(300);
+    assert(
+      await page
+        .getByText('更新耗材接口超时，请稍后重试。', { exact: true })
+        .isVisible(),
+    );
+    await context.close();
+  }
+
   console.log('REVIEW_REGRESSIONS: PASS');
 } finally {
   await browser.close();

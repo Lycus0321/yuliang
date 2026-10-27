@@ -245,7 +245,7 @@ export function LibraryView({
         ) : null}
 
         {error ? (
-          <View style={styles.errorBanner}>
+          <View accessibilityLiveRegion="polite" style={styles.errorBanner}>
             <AlertTriangle color={colors.danger} size={17} />
             <Text style={styles.errorText}>{error}</Text>
             <Pressable onPress={onRefresh}>
