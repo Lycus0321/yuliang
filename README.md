@@ -14,6 +14,10 @@
   <img src="./docs/screenshots/weigh.png" width="300" alt="称重">
 </p>
 
+<p align="center">
+  <img src="./docs/screenshots/pc-library.png" width="100%" alt="PC 端耗材库">
+</p>
+
 ## 项目简介
 
 拓竹官方对耗材余量的统计依赖 RFID 和估算数据，第三方耗材通常无法自动统计，估算值也可能与实际剩余量产生偏差。
