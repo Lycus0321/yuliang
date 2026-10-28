@@ -10,8 +10,8 @@
 **当前版本：`1.1.11`　Android：`versionCode 23`**
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Lycus0321/filament-app/master/docs/screenshots/library.png" width="300" alt="耗材库">
-  <img src="https://raw.githubusercontent.com/Lycus0321/filament-app/master/docs/screenshots/weigh.png" width="300" alt="称重">
+  <img src="./docs/screenshots/library.png" width="300" alt="耗材库">
+  <img src="./docs/screenshots/weigh.png" width="300" alt="称重">
 </p>
 
 ## 项目简介
