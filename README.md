@@ -2,9 +2,9 @@
 
 > 面向 Bambu Lab（拓竹）用户的耗材称重、余量计算与云端同步工具。
 
-[![GitHub](https://img.shields.io/badge/GitHub-Open%20Source-1D1D1F?logo=github)](https://github.com/Lycus0321/filament-app)
+[![GitHub](https://img.shields.io/badge/GitHub-Open%20Source-1D1D1F?logo=github)](https://github.com/Lycus0321/yuliang)
 [![PWA](https://img.shields.io/badge/PWA-在线体验-236B55)](https://yuliang.lykkk.fun)
-[![Android](https://img.shields.io/badge/Android-下载%20APK-3DDC84?logo=android&logoColor=white)](https://github.com/Lycus0321/filament-app/releases/tag/android-latest)
+[![Android](https://img.shields.io/badge/Android-下载%20APK-3DDC84?logo=android&logoColor=white)](https://github.com/Lycus0321/yuliang/releases/tag/android-latest)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Web%20Only-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 
 **当前版本：`1.1.11`　Android：`versionCode 23`**
@@ -29,6 +29,11 @@
 ```
 
 项目使用一套 Expo 代码同时输出 PWA、Android，并保留 iOS 原生构建能力。Web/PWA 通过 Cloudflare Workers 代理拓竹 API；Android/iOS 直接连接拓竹 API。
+
+> [!NOTE]
+> **当前仅支持 Bambu Lab（拓竹）账号和云端耗材体系。**
+>
+> 本项目不读取其他品牌打印机的耗材数据，也不接管打印机本地 MQTT。
 
 > [!IMPORTANT]
 > **只有自行部署 Web/PWA 时才需要 Cloudflare。**
@@ -134,8 +139,8 @@ Web 端 Token 只保存在 Worker 加密的 HttpOnly Cookie 中，不进入浏�
 ## 在线体验
 
 - PWA：<https://yuliang.lykkk.fun>
-- Android APK：<https://github.com/Lycus0321/filament-app/releases/tag/android-latest>
-- 源码：<https://github.com/Lycus0321/filament-app>
+- Android APK：<https://github.com/Lycus0321/yuliang/releases/tag/android-latest>
+- 源码：<https://github.com/Lycus0321/yuliang>
 
 Android APK 无需部署 Cloudflare，安装后可直接登录拓竹账号使用。
 
@@ -153,8 +158,8 @@ Android APK 无需部署 Cloudflare，安装后可直接登录拓竹账号使用
 ### 安装
 
 ```bash
-git clone https://github.com/Lycus0321/filament-app.git
-cd filament-app
+git clone https://github.com/Lycus0321/yuliang.git
+cd yuliang
 npm ci
 ```
 
@@ -383,7 +388,7 @@ node scripts/verify-review-regressions.mjs
 ## 项目结构
 
 ```text
-filament-app/
+yuliang/
 ├── .github/workflows/     GitHub Actions Android 构建
 ├── assets/                应用图标和启动图
 ├── public/                PWA Manifest、Service Worker 和图标
@@ -427,13 +432,13 @@ filament-app/
 
 欢迎提交 Issue 和 Pull Request：
 
-- Issue：<https://github.com/Lycus0321/filament-app/issues>
-- Pull Request：<https://github.com/Lycus0321/filament-app/pulls>
+- Issue：<https://github.com/Lycus0321/yuliang/issues>
+- Pull Request：<https://github.com/Lycus0321/yuliang/pulls>
 
 提交前建议至少执行 TypeScript、Worker 类型检查和 Web 构建。
 
 ## License
 
-本项目基于 [MIT License](https://github.com/Lycus0321/filament-app/blob/master/LICENSE) 开源。
+本项目基于 [MIT License](https://github.com/Lycus0321/yuliang/blob/master/LICENSE) 开源。
 
 Bambu Lab、Bambu Studio 和 Bambu Handy 是其权利人的商标或产品名称。本项目与 Bambu Lab 无隶属或官方合作关系。
