@@ -5,7 +5,7 @@
 [![GitHub](https://img.shields.io/badge/GitHub-Open%20Source-1D1D1F?logo=github)](https://github.com/Lycus0321/filament-app)
 [![PWA](https://img.shields.io/badge/PWA-在线体验-236B55)](https://yuliang.lykkk.fun)
 [![Android](https://img.shields.io/badge/Android-下载%20APK-3DDC84?logo=android&logoColor=white)](https://github.com/Lycus0321/filament-app/releases/tag/android-latest)
-[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Web%20Only-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 
 **当前版本：`1.1.11`　Android：`versionCode 23`**
 
@@ -29,6 +29,11 @@
 ```
 
 项目使用一套 Expo 代码同时输出 PWA、Android，并保留 iOS 原生构建能力。Web/PWA 通过 Cloudflare Workers 代理拓竹 API；Android/iOS 直接连接拓竹 API。
+
+> [!IMPORTANT]
+> **只有自行部署 Web/PWA 时才需要 Cloudflare。**
+>
+> 如果只使用 Android APK，不需要 Cloudflare 账号、Worker、自定义域名或 `SESSION_SECRET`。APK 会直接连接拓竹 API。
 
 > 本项目不是 Bambu Lab 官方产品，使用的是社区维护的非公开接口。接口变化可能导致部分功能失效。
 
@@ -131,6 +136,8 @@ Web 端 Token 只保存在 Worker 加密的 HttpOnly Cookie 中，不进入浏�
 - PWA：<https://yuliang.lykkk.fun>
 - Android APK：<https://github.com/Lycus0321/filament-app/releases/tag/android-latest>
 - 源码：<https://github.com/Lycus0321/filament-app>
+
+Android APK 无需部署 Cloudflare，安装后可直接登录拓竹账号使用。
 
 应用提供演示模式，可以在不登录拓竹账号的情况下查看主要界面和交互。
 
